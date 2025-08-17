@@ -1,0 +1,25 @@
+# MacTube - YouTube Downloader Requirements
+# =============================================
+
+# Interface graphique moderne
+customtkinter==5.2.2
+
+# Téléchargement YouTube (remplace pytube)
+yt-dlp==2025.8.11
+
+# Traitement d'images et miniatures
+pillow==11.3.0
+
+# Requêtes HTTP pour les miniatures
+requests==2.32.4
+
+# Conversion vidéo/audio (optionnel, yt-dlp gère la fusion)
+ffmpeg-python==0.2.0
+
+# Dépendances automatiques (installées automatiquement)
+# - certifi, charset-normalizer, darkdetect, future, idna, packaging, urllib3
+
+# Modules Python intégrés (pas d'installation requise)
+# - tkinter, threading, json, pathlib, os, io, time, datetime, queue
+
+# Installation : pip install -r requirements.txt

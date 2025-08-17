@@ -1,0 +1,48 @@
+# MacTube - YouTube Downloader
+# =============================
+
+# Environnement virtuel Python
+venv/
+env/
+ENV/
+
+# Builds et distributions
+build/
+dist/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Fichiers temporaires
+*.tmp
+*.temp
+*.swp
+*.bak
+
+# Fichiers système macOS
+.DS_Store
+._*
+.Spotlight-V100
+.Trashes
+
+# Fichiers de développement
+.vscode/
+.idea/
+*.sublime-*
+
+# Fichiers FFmpeg temporaires
+ffmpeg_binary
+ffmpeg_bundle/
+
+# Logs et débogage
+*.log
+debug_*.py
+
+# Fichiers de configuration personnels
+config_local.py
+.env
+
+# Installateurs et builds finaux
+MacTube-Installer.dmg
+*.dmg
