@@ -31,7 +31,6 @@
 
 ![Interface MacTube](screenshots/MacTube.png)
 
-**Interface moderne avec thèmes clair/sombre, navigation par onglets et design macOS natif**
 
 </div>
 
