@@ -582,6 +582,20 @@ class MacTubeApp:
         # Entrée pour analyser
         self.url_entry.bind('<Return>', lambda e: self.analyze_video())
         
+        # Menu contextuel pour le clic droit
+        self.create_context_menu()
+        
+        # Bindings pour le menu contextuel - Gestion multi-OS
+        self.url_entry.bind('<Button-3>', self.show_context_menu)  # Clic droit standard (Windows/Linux)
+        self.url_entry.bind('<Control-Button-1>', self.show_context_menu)  # Clic droit macOS (Cmd+Clic)
+        self.url_entry.bind('<Button-2>', self.show_context_menu)  # Clic droit macOS alternatif
+        
+        # Binding spécifique pour macOS
+        if hasattr(self, 'root') and hasattr(self.root, 'tk') and self.root.tk.call('tk', 'windowingsystem') == 'aqua':
+            print("🔧 Détection macOS - Configuration des bindings spécifiques")
+            self.url_entry.bind('<Button-2>', self.show_context_menu)
+            self.url_entry.bind('<Control-Button-1>', self.show_context_menu)
+        
         # Focus automatique sur le champ URL
         self.url_entry.focus()
     
@@ -919,6 +933,56 @@ class MacTubeApp:
         """Appelé lors du changement de tab"""
         current_tab = getattr(self.navigation, 'current_tab', 'download')
         self.show_tab(current_tab)
+    
+    def create_context_menu(self):
+        """Crée le menu contextuel pour le champ URL"""
+        try:
+            self.context_menu = tk.Menu(self.root, tearoff=0)
+            self.context_menu.add_command(label="📋 Coller", command=self.paste_url)
+            self.context_menu.add_command(label="📄 Copier", command=self.copy_text)
+            self.context_menu.add_command(label="✂️ Couper", command=self.cut_text)
+            self.context_menu.add_separator()
+            self.context_menu.add_command(label="📝 Tout sélectionner", command=self.select_all_text)
+            print("✅ Menu contextuel créé avec succès")
+        except Exception as e:
+            print(f"❌ Erreur lors de la création du menu contextuel: {e}")
+            self.context_menu = None
+    
+    def show_context_menu(self, event):
+        """Affiche le menu contextuel au clic droit"""
+        print(f"🔍 Événement clic droit détecté: {event.type} - Button: {event.num}")
+        try:
+            # Positionner le menu à l'endroit du clic
+            self.context_menu.tk_popup(event.x_root, event.y_root)
+            print("✅ Menu contextuel affiché avec succès")
+        except Exception as e:
+            print(f"❌ Erreur lors de l'affichage du menu: {e}")
+        finally:
+            self.context_menu.grab_release()
+    
+    def copy_text(self):
+        """Copie le texte sélectionné"""
+        try:
+            selected_text = self.url_entry.selection_get()
+            self.root.clipboard_clear()
+            self.root.clipboard_append(selected_text)
+        except:
+            pass
+    
+    def cut_text(self):
+        """Coupe le texte sélectionné"""
+        try:
+            selected_text = self.url_entry.selection_get()
+            self.root.clipboard_clear()
+            self.root.clipboard_append(selected_text)
+            self.url_entry.delete("sel.first", "sel.last")
+        except:
+            pass
+    
+    def select_all_text(self):
+        """Sélectionne tout le texte"""
+        self.url_entry.select_range(0, tk.END)
+        self.url_entry.icursor(tk.END)
     
     def paste_url(self, event=None):
         """Colle l'URL depuis le presse-papiers"""
