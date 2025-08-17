@@ -3,6 +3,26 @@
 # MacTube - Script de build complet
 # Crée l'application .app native et l'installateur DMG
 # Compatible macOS 10.14+ (Intel + Apple Silicon)
+#
+# ==============================================================
+# PRÉREQUIS AVANT D'EXÉCUTER CE SCRIPT :
+# ==============================================================
+#
+# 1. Installer PyInstaller :
+#    pip install pyinstaller
+#
+# 2. Installer create-dmg :
+#    brew install create-dmg
+#
+# 3. Créer et activer l'environnement virtuel :
+#    python3 -m venv venv
+#    source venv/bin/activate
+#    pip install -r requirements.txt
+#
+# 4. Vérifier que FFmpeg est présent (ffmpeg_binary)
+# 5. Vérifier que les icônes sont présentes (mactube.icns, mactube.jpeg)
+#
+# ==============================================================
 
 set -e  # Arrêter en cas d'erreur
 
