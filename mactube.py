@@ -1431,7 +1431,7 @@ class MacTubeApp:
             # Mettre à jour la couleur de fond principale
             bg_color = MacTubeTheme.get_color('bg_primary')
             self.root.configure(fg_color=bg_color)
-            print(f"🎨 Couleur de fond: {bg_color}")
+    
             
             # Mettre à jour le contenu principal
             if hasattr(self, 'main_content'):
@@ -1516,7 +1516,7 @@ class MacTubeApp:
         try:
             # Couleur du texte selon le thème
             text_color = MacTubeTheme.get_color('text_primary')
-            print(f"🎨 Mise à jour des labels avec la couleur: {text_color}")
+    
             
             # Labels principaux
             if hasattr(self, 'video_title'):
@@ -1595,7 +1595,7 @@ class MacTubeApp:
             border_color = MacTubeTheme.get_color('text_secondary')
             text_color = MacTubeTheme.get_color('text_primary')
             
-            print(f"🎨 Mise à jour des entrées - Fond: {bg_color}, Bordure: {border_color}, Texte: {text_color}")
+    
             
             # Champs de saisie
             if hasattr(self, 'url_entry'):
@@ -1633,7 +1633,7 @@ class MacTubeApp:
         try:
             # Couleur du placeholder selon le thème
             placeholder_color = MacTubeTheme.get_color('text_secondary')
-            print(f"🎨 Mise à jour des placeholders avec: {placeholder_color}")
+    
             
             # Mettre à jour les placeholders des champs
             if hasattr(self, 'url_entry'):

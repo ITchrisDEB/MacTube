@@ -48,20 +48,15 @@ class MacTubeTheme:
             import customtkinter as ctk
             current_theme = ctk.get_appearance_mode()
             is_dark = (current_theme.lower() == "dark")  # Accepter 'Dark' et 'dark'
-            print(f"🎨 get_color: {color_name} - Thème: '{current_theme}' (type: {type(current_theme)}) - Sombre: {is_dark}")
-            print(f"🎨 Comparaison: '{current_theme.lower()}' == 'dark' = {current_theme.lower() == 'dark'}")
         except Exception as e:
             # Fallback sur darkdetect
             is_dark = darkdetect.isDark()
-            print(f"🎨 get_color fallback: {color_name} - Sombre: {is_dark} - Erreur: {e}")
         
         if is_dark and color_name in cls.COLORS['dark']:
             color = cls.COLORS['dark'][color_name]
-            print(f"🎨 Couleur sombre: {color_name} = {color}")
             return color
         
         color = cls.COLORS.get(color_name, "#000000")
-        print(f"🎨 Couleur claire: {color_name} = {color}")
         return color
     
     @classmethod
