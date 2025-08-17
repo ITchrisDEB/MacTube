@@ -29,15 +29,32 @@
 
 <div align="center">
 
+**Screenshot de l'interface MacTube**
 
-
-
+*L'interface moderne avec thèmes clair/sombre, navigation par onglets et design macOS natif*
 
 </div>
 
 ---
 
 ## 🚀 Installation
+
+### 🚀 Lancement Rapide (Recommandé pour débutants)
+```bash
+# Cloner le projet
+git clone https://github.com/ITchrisDEB/MacTube.git
+cd MacTube
+
+# Double-cliquer sur mactube.sh OU exécuter :
+./mactube.sh
+```
+
+**Le script `mactube.sh` fait TOUT automatiquement :**
+- ✅ Vérifie Python 3
+- ✅ Crée l'environnement virtuel
+- ✅ Installe les dépendances
+- ✅ Configure FFmpeg
+- ✅ Lance l'application
 
 ### Option 1 : Installateur DMG (Recommandé)
 1. Téléchargez `MacTube-Installer.dmg`
@@ -71,6 +88,41 @@ pip install -r requirements.txt
 - **macOS** 10.14+ (Mojave)
 - **Python** 3.8+ (pour le build)
 - **FFmpeg** (inclus dans le bundle)
+
+---
+
+## 🆘 Dépannage
+
+### Problèmes courants
+
+**❌ "Python 3 non trouvé"**
+```bash
+# Installer Python depuis https://www.python.org/downloads/
+# Redémarrer le terminal puis relancer mactube.sh
+```
+
+**❌ "Permission denied" sur mactube.sh**
+```bash
+chmod +x mactube.sh
+```
+
+**❌ Erreurs de dépendances**
+```bash
+# Supprimer et recréer l'environnement virtuel
+rm -rf venv
+./mactube.sh
+```
+
+**❌ FFmpeg manquant**
+```bash
+# Le script télécharge automatiquement FFmpeg
+# Si problème, exécuter manuellement :
+./download_ffmpeg.sh
+```
+
+### Support
+- **Issues GitHub** : [Signaler un bug](https://github.com/ITchrisDEB/MacTube/issues)
+- **Discussions** : [Demander de l'aide](https://github.com/ITchrisDEB/MacTube/discussions)
 
 ---
 
