@@ -29,9 +29,7 @@
 
 <div align="center">
 
-**Screenshot de l'interface MacTube**
-
-*L'interface moderne avec thèmes clair/sombre, navigation par onglets et design macOS natif*
+https://github.com/ITchrisDEB/MacTube/blob/main/screenshots/MacTube.png
 
 </div>
 
