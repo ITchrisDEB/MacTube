@@ -29,9 +29,9 @@
 
 <div align="center">
 
-**Screenshot de l'interface MacTube**
+![Interface MacTube](screenshots/MacTube.png)
 
-*L'interface moderne avec thèmes clair/sombre, navigation par onglets et design macOS natif*
+**Interface moderne avec thèmes clair/sombre, navigation par onglets et design macOS natif**
 
 </div>
 
