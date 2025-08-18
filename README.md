@@ -52,6 +52,8 @@
 
 ![Interface MacTube](screenshots/MacTube.png)
 
+![Interface MacTube - Extraction Audio](screenshots/MacTube2.png)
+
 </div>
 
 ---
