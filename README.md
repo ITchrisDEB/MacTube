@@ -38,22 +38,30 @@
 
 ## 🚀 Installation
 
-### 🚀 Lancement Rapide (Recommandé pour débutants)
+### Lancement Rapide (Recommandé pour débutants)
 ```bash
-# Cloner le projet
 git clone https://github.com/ITchrisDEB/MacTube.git
 cd MacTube
-
-# Double-cliquer sur mactube.sh OU exécuter :
 ./mactube.sh
 ```
 
 **Le script `mactube.sh` fait TOUT automatiquement :**
-- ✅ Vérifie Python 3
-- ✅ Crée l'environnement virtuel
-- ✅ Installe les dépendances
-- ✅ Configure FFmpeg
-- ✅ Lance l'application
+- Vérifie Python 3
+- Crée l'environnement virtuel
+- Installe les dépendances
+- Configure FFmpeg
+- Lance l'application
+
+### Lancement Manuel en Python
+```bash
+git clone https://github.com/ITchrisDEB/MacTube.git
+cd MacTube
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+./download_ffmpeg.sh
+python3 mactube.py
+```
 
 ### Option 1 : Installateur DMG (Recommandé)
 1. Téléchargez `MacTube-Installer.dmg`
