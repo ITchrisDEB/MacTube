@@ -23,6 +23,8 @@ class MacTubeTheme:
         'bg_secondary': "#FFFFFF",     # Blanc
         'bg_header': "#E5E5EA",        # Gris header
         'bg_card': "#FFFFFF",          # Blanc carte
+        'bg_tertiary': "#F9F9FB",      # Gris très léger pour zones secondaires
+        'border': "#D1D1D6",           # Gris bordure clair
         
         # Textes
         'text_primary': "#000000",     # Noir
@@ -35,6 +37,8 @@ class MacTubeTheme:
             'bg_secondary': "#2C2C2E", 
             'bg_header': "#3A3A3C",
             'bg_card': "#2C2C2E",
+            'bg_tertiary': "#3A3A3C",   # Légèrement plus clair pour contraster
+            'border': "#48484A",        # Gris bordure sombre
             'text_primary': "#FFFFFF",
             'text_secondary': "#8E8E93"
         }

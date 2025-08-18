@@ -15,12 +15,34 @@
 ## ✨ Fonctionnalités
 
 - **Interface native MacOS** avec thèmes clair/sombre automatiques
-- **Navigation par onglets** organisée (Télécharger, Historique, File d'attente, Paramètres)
+- **Navigation par onglets** organisée (Télécharger, Audio, Historique, File d'attente, Paramètres)
 - **Téléchargement HD** jusqu'à 4K avec `yt-dlp`
-- **File d'attente** pour téléchargements multiples
-- **Historique persistant** des téléchargements
-- **Formats multiples** : MP4, MKV, WebM, AVI
-- **FFmpeg intégré** pour la conversion automatique
+- **Extraction audio avancée** avec formats multiples (MP3, M4A, AAC, FLAC, WAV, OGG)
+- **Traitement en bulk** pour extraire l'audio de listes de vidéos depuis des fichiers .txt
+- **File d'attente intelligente** pour téléchargements multiples avec gestion des priorités
+- **Historique persistant** des téléchargements avec nettoyage automatique
+- **Formats vidéo multiples** : MP4, MKV, WebM, AVI, MOV
+- **FFmpeg intégré** pour la conversion automatique et le post-traitement
+
+---
+
+## 🎵 Extraction Audio
+
+### Fonctionnalités audio
+- **Formats supportés** : MP3, M4A, AAC, FLAC, WAV, OGG
+- **Qualités configurables** : 128, 192, 256, 320 kbps
+- **Analyse automatique** des métadonnées vidéo
+- **Noms de fichiers optimisés** sans ID vidéo
+- **Gestion intelligente** des formats lossless (désactivation automatique de la qualité)
+- **Interface dédiée** avec onglet séparé
+
+### Traitement en bulk
+- **Upload de fichiers .txt** contenant des URLs YouTube
+- **Nettoyage automatique** des URLs (suppression des paramètres de playlist)
+- **Validation des URLs** YouTube avec rapport d'erreurs
+- **Traitement en lot** avec paramètres audio personnalisables
+- **Gestion des erreurs** avec rapport des URLs invalides
+- **Ajout silencieux** à la file d'attente pour éviter les pop-ups multiples
 
 ---
 
@@ -29,7 +51,6 @@
 <div align="center">
 
 ![Interface MacTube](screenshots/MacTube.png)
-
 
 </div>
 
@@ -131,6 +152,7 @@ chmod +x mactube.sh
 ```
 mactube/
 ├── mactube.py              # Application principale
+├── mactube_audio.py        # Extraction audio et traitement bulk
 ├── mactube_theme.py        # Gestion des thèmes
 ├── mactube_components.py   # Composants UI
 ├── mactube_ffmpeg.py       # Gestion FFmpeg
@@ -150,7 +172,7 @@ mactube/
 - **FFmpeg portable** inclus dans le projet
 - **Aucune dépendance système** requise
 - **Conversion automatique** vidéo + audio
-- **Support des formats** MP4, MKV, WebM, AVI
+- **Support des formats** MP4, MKV, WebM, AVI, MOV, MP3, M4A, AAC, FLAC, WAV, OGG
 
 ---
 

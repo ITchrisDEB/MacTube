@@ -26,16 +26,17 @@ class MacTubeNavigation:
         self.nav_frame.pack(fill="x", side="top")
         
         # Boutons de navigation
-        self.download_btn = self.create_nav_button("⬇️ Télécharger", "download", 0)
-        self.history_btn = self.create_nav_button("📚 Historique", "history", 1)
-        self.queue_btn = self.create_nav_button("📋 File d'attente", "queue", 2)
-        self.settings_btn = self.create_nav_button("⚙️ Paramètres", "settings", 3)
+        self.download_btn = self.create_nav_button("⬇️ Télécharger Vidéo", "download", 0)
+        self.audio_btn = self.create_nav_button("🎵 Extraction Audio", "audio", 1)
+        self.history_btn = self.create_nav_button("📚 Historique", "history", 2)
+        self.queue_btn = self.create_nav_button("📋 File d'attente", "queue", 3)
+        self.settings_btn = self.create_nav_button("⚙️ Paramètres", "settings", 4)
         
         # Indicateur de tab actif (corrigé)
         self.active_indicator = ctk.CTkFrame(
             self.nav_frame,
             fg_color=MacTubeTheme.get_color('primary'),
-            width=120,
+            width=150,
             height=3,
             corner_radius=0
         )
@@ -51,11 +52,11 @@ class MacTubeNavigation:
             hover_color=MacTubeTheme.get_color('bg_secondary'),
             text_color=MacTubeTheme.get_color('text_primary'),
             font=ctk.CTkFont(size=12, weight="bold"),
-            width=120,
+            width=150,
             height=40,
             corner_radius=0
         )
-        btn.place(x=position * 120, y=5)
+        btn.place(x=position * 150, y=5)
         return btn
     
     def switch_tab(self, tab_name):
@@ -63,13 +64,13 @@ class MacTubeNavigation:
         self.current_tab = tab_name
         # Mettre à jour l'indicateur
         position = self.tab_name_to_position(tab_name)
-        self.active_indicator.place(x=position * 120, y=47)
+        self.active_indicator.place(x=position * 150, y=47)
         # Émettre un événement pour changer le contenu
         self.parent.event_generate("<<TabChanged>>")
     
     def tab_name_to_position(self, tab_name):
         """Convertit le nom du tab en position"""
-        positions = {"download": 0, "history": 1, "queue": 2, "settings": 3}
+        positions = {"download": 0, "audio": 1, "history": 2, "queue": 3, "settings": 4}
         return positions.get(tab_name, 0)
 
 class MacTubeCard:

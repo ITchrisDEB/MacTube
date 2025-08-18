@@ -11,7 +11,7 @@ import platform
 from pathlib import Path
 
 
-def get_ffmpeg_path():
+def get_ffmpeg_path(verbose: bool = False):
     """
     Retourne le chemin vers FFmpeg
     Priorité: Bundle > Système > Erreur
@@ -24,19 +24,22 @@ def get_ffmpeg_path():
         # Essayer d'abord dans le répertoire courant du bundle
         ffmpeg_path = bundle_dir / "ffmpeg_binary"
         if ffmpeg_path.exists() and os.access(ffmpeg_path, os.X_OK):
-            print(f"✅ FFmpeg trouvé dans le bundle (MEIPASS): {ffmpeg_path}")
+            if verbose:
+                print(f"✅ FFmpeg trouvé dans le bundle (MEIPASS): {ffmpeg_path}")
             return str(ffmpeg_path)
         
         # Essayer dans Frameworks (structure .app)
         frameworks_path = Path(sys.executable).parent.parent / "Frameworks" / "ffmpeg_binary"
         if frameworks_path.exists() and os.access(frameworks_path, os.X_OK):
-            print(f"✅ FFmpeg trouvé dans Frameworks: {frameworks_path}")
+            if verbose:
+                print(f"✅ FFmpeg trouvé dans Frameworks: {frameworks_path}")
             return str(frameworks_path)
     
     # Essayer le répertoire courant (pour le développement)
     current_ffmpeg = Path.cwd() / "ffmpeg_binary"
     if current_ffmpeg.exists() and os.access(current_ffmpeg, os.X_OK):
-        print(f"✅ FFmpeg trouvé dans le répertoire courant: {current_ffmpeg}")
+        if verbose:
+            print(f"✅ FFmpeg trouvé dans le répertoire courant: {current_ffmpeg}")
         return str(current_ffmpeg)
     
     # Essayer le système
@@ -45,7 +48,8 @@ def get_ffmpeg_path():
                               capture_output=True, text=True, check=True)
         system_ffmpeg = result.stdout.strip()
         if system_ffmpeg and os.access(system_ffmpeg, os.X_OK):
-            print(f"✅ FFmpeg trouvé dans le système: {system_ffmpeg}")
+            if verbose:
+                print(f"✅ FFmpeg trouvé dans le système: {system_ffmpeg}")
             return system_ffmpeg
     except (subprocess.CalledProcessError, FileNotFoundError):
         pass
@@ -54,13 +58,15 @@ def get_ffmpeg_path():
     try:
         homebrew_ffmpeg = "/usr/local/bin/ffmpeg"
         if os.path.exists(homebrew_ffmpeg) and os.access(homebrew_ffmpeg, os.X_OK):
-            print(f"✅ FFmpeg trouvé via Homebrew: {homebrew_ffmpeg}")
+            if verbose:
+                print(f"✅ FFmpeg trouvé via Homebrew: {homebrew_ffmpeg}")
             return homebrew_ffmpeg
     except:
         pass
     
     # FFmpeg non trouvé
-    print("❌ FFmpeg non trouvé")
+    if verbose:
+        print("❌ FFmpeg non trouvé")
     return None
 
 
@@ -68,7 +74,7 @@ def test_ffmpeg():
     """
     Teste si FFmpeg fonctionne correctement
     """
-    ffmpeg_path = get_ffmpeg_path()
+    ffmpeg_path = get_ffmpeg_path(verbose=True)
     if not ffmpeg_path:
         return False, "FFmpeg non trouvé"
     
@@ -92,7 +98,7 @@ def get_ffmpeg_info():
     """
     Retourne les informations détaillées sur FFmpeg
     """
-    ffmpeg_path = get_ffmpeg_path()
+    ffmpeg_path = get_ffmpeg_path(verbose=True)
     if not ffmpeg_path:
         return None
     

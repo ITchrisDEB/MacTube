@@ -27,16 +27,19 @@ import requests
 from mactube_theme import MacTubeTheme, setup_mactube_theme
 from mactube_components import MacTubeNavigation, MacTubeCard, MacTubeProgressBar, MacTubeThumbnail
 from mactube_ffmpeg import get_ffmpeg_path
+from mactube_audio import MacTubeAudioExtractor
 
 class DownloadTask:
     """Tâche de téléchargement pour la file d'attente"""
     
-    def __init__(self, url, quality, output_format, filename, download_path):
+    def __init__(self, url, quality, output_format, filename, download_path, task_type="video"):
         self.url = url
         self.quality = quality
         self.output_format = output_format
-        self.filename = filename
+        # Forcer un nom de fichier par défaut si vide
+        self.filename = filename if (filename and filename.strip()) else "%(title)s"
         self.download_path = download_path
+        self.task_type = task_type  # "video" ou "audio"
         self.status = "En attente"
         self.progress = 0
         self.speed = "0 MB/s"
@@ -47,14 +50,23 @@ class DownloadTask:
     
     def _extract_video_title(self):
         """Extrait le titre de la vidéo depuis l'URL ou le nom de fichier"""
-        if self.filename and self.filename != "Nom personnalisé (optionnel)":
+        if self.filename and self.filename != "Nom personnalisé (optionnel)" and self.filename != "%(title)s":
             return self.filename
         elif "youtube.com" in self.url or "youtu.be" in self.url:
             # Extraire l'ID de la vidéo pour un titre court
             import re
             video_id_match = re.search(r'(?:youtube\.com/watch\?v=|youtu\.be/)([a-zA-Z0-9_-]+)', self.url)
             if video_id_match:
-                return f"YouTube Video ({video_id_match.group(1)[:8]}...)"
+                video_id = video_id_match.group(1)
+                # Essayer d'extraire le vrai titre de la vidéo
+                try:
+                    import yt_dlp
+                    ydl_opts = {'quiet': True, 'no_warnings': True}
+                    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                        info = ydl.extract_info(f"https://www.youtube.com/watch?v={video_id}", download=False)
+                        return info.get('title', f"YouTube Video ({video_id[:8]}...)")
+                except:
+                    return f"YouTube Video ({video_id[:8]}...)"
         return "Vidéo inconnue"
 
 class MacTubeApp:
@@ -72,12 +84,22 @@ class MacTubeApp:
         self.download_path = str(Path.home() / "Downloads")
         self.is_downloading = False
         
+        # Chemin FFmpeg (vérifié une seule fois au démarrage)
+        self.ffmpeg_path = get_ffmpeg_path()
+        if self.ffmpeg_path:
+            print(f"✅ FFmpeg trouvé: {self.ffmpeg_path}")
+        else:
+            print("⚠️ FFmpeg non trouvé, utilisation du système")
+        
         # File d'attente des téléchargements
         self.download_queue = queue.Queue()
         self.download_threads = []
         self.active_tasks = {}  # Stocker {task_id: task} pour les tâches actives
         self.max_concurrent_downloads = 2  # Nombre max de téléchargements simultanés
         self.queue_worker_running = False
+        
+        # Système anti-flickering (débounce)
+        self._queue_refresh_job = None
         
         # Création de la fenêtre principale
         self.setup_main_window()
@@ -87,6 +109,10 @@ class MacTubeApp:
         
         # Création de l'interface
         self.create_interface()
+        
+        # Initialisation du module audio (après la création de main_content)
+        # Passer self pour permettre l'ajout à la file d'attente
+        self.audio_extractor = MacTubeAudioExtractor(self.main_content, app=self)
         
         # Configuration des événements
         self.setup_bindings()
@@ -383,23 +409,43 @@ class MacTubeApp:
         self.queue_list_frame = ctk.CTkFrame(self.queue_card.content_frame, fg_color="transparent")
         self.queue_list_frame.pack(fill="both", expand=True, pady=(0, 15))
         
-        # En-têtes
-        headers_frame = ctk.CTkFrame(self.queue_list_frame, fg_color="transparent")
-        headers_frame.pack(fill="x", pady=(0, 10))
-        
-        MacTubeTheme.create_label_body(headers_frame, "Tâche").pack(side="left", padx=(0, 20))
-        MacTubeTheme.create_label_body(headers_frame, "Progression").pack(side="left", padx=(0, 20))
-        MacTubeTheme.create_label_body(headers_frame, "Vitesse").pack(side="left", padx=(0, 20))
-        MacTubeTheme.create_label_body(headers_frame, "Temps").pack(side="left", padx=(0, 20))
-        MacTubeTheme.create_label_body(headers_frame, "Statut").pack(side="left", padx=(0, 20))
-        MacTubeTheme.create_label_body(headers_frame, "Actions").pack(side="left")
-        
-        # Zone de liste (scrollable)
-        self.queue_list_container = ctk.CTkScrollableFrame(
-            self.queue_list_frame,
-            height=300
-        )
+        # Zone de liste avec grille globale pour un alignement parfait
+        self.queue_list_container = ctk.CTkFrame(self.queue_list_frame, fg_color="transparent")
         self.queue_list_container.pack(fill="both", expand=True)
+        
+        # Configuration de la grille globale avec largeurs fixes
+        self.queue_list_container.grid_columnconfigure(0, weight=0, minsize=200)  # Tâche
+        self.queue_list_container.grid_columnconfigure(1, weight=0, minsize=150)  # Progression
+        self.queue_list_container.grid_columnconfigure(2, weight=0, minsize=80)   # Vitesse
+        self.queue_list_container.grid_columnconfigure(3, weight=0, minsize=80)   # Temps
+        self.queue_list_container.grid_columnconfigure(4, weight=0, minsize=100)  # Statut
+        self.queue_list_container.grid_columnconfigure(5, weight=0, minsize=100)  # Fichier
+        
+        # En-têtes dans la grille globale (ligne 0)
+        task_header = MacTubeTheme.create_label_body(self.queue_list_container, "Tâche")
+        task_header.grid(row=0, column=0, sticky="w", padx=5, pady=5)
+        
+        progress_header = MacTubeTheme.create_label_body(self.queue_list_container, "Progression")
+        progress_header.grid(row=0, column=1, sticky="w", padx=5, pady=5)
+        
+        speed_header = MacTubeTheme.create_label_body(self.queue_list_container, "Vitesse")
+        speed_header.grid(row=0, column=2, sticky="w", padx=5, pady=5)
+        
+        time_header = MacTubeTheme.create_label_body(self.queue_list_container, "Temps")
+        time_header.grid(row=0, column=3, sticky="w", padx=5, pady=5)
+        
+        status_header = MacTubeTheme.create_label_body(self.queue_list_container, "Statut")
+        status_header.grid(row=0, column=4, sticky="w", padx=5, pady=5)
+        
+        file_header = MacTubeTheme.create_label_body(self.queue_list_container, "Fichier")
+        file_header.grid(row=0, column=5, sticky="w", padx=5, pady=5)
+        
+        # Séparateur visuel
+        separator = ctk.CTkFrame(self.queue_list_container, height=2, fg_color="gray")
+        separator.grid(row=1, column=0, columnspan=6, sticky="ew", pady=5)
+        
+        # Compteur de lignes pour la grille
+        self.queue_row_counter = 2
         
         # Boutons d'action
         buttons_frame = ctk.CTkFrame(self.queue_card.content_frame, fg_color="transparent")
@@ -408,7 +454,7 @@ class MacTubeApp:
         self.refresh_queue_button = MacTubeTheme.create_button_primary(
             buttons_frame,
             "🔄 Actualiser",
-            command=self._refresh_queue_list,
+            command=self.schedule_queue_refresh,
             width=120
         )
         self.refresh_queue_button.pack(side="left", padx=(0, 10))
@@ -430,7 +476,7 @@ class MacTubeApp:
         self.resume_queue_button.pack(side="left")
         
         # Initialiser la liste
-        self._refresh_queue_list()
+        self.schedule_queue_refresh(0)
     
     def create_settings_tab(self):
         """Crée le tab des paramètres"""
@@ -557,6 +603,8 @@ class MacTubeApp:
         """Affiche un tab spécifique"""
         # Masquer tous les tabs
         self.download_frame.pack_forget()
+        if hasattr(self, 'audio_extractor'):
+            self.audio_extractor.hide()
         self.history_frame.pack_forget()
         self.queue_frame.pack_forget()
         self.settings_frame.pack_forget()
@@ -564,6 +612,8 @@ class MacTubeApp:
         # Afficher le tab sélectionné
         if tab_name == "download":
             self.download_frame.pack(fill="both", expand=True)
+        elif tab_name == "audio" and hasattr(self, 'audio_extractor'):
+            self.audio_extractor.pack(fill="both", expand=True)
         elif tab_name == "history":
             self.history_frame.pack(fill="both", expand=True)
         elif tab_name == "queue":
@@ -596,6 +646,9 @@ class MacTubeApp:
             self.url_entry.bind('<Button-2>', self.show_context_menu)
             self.url_entry.bind('<Control-Button-1>', self.show_context_menu)
         
+        # Binding de fermeture avec nettoyage automatique de l'historique
+        self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
+        
         # Focus automatique sur le champ URL
         self.url_entry.focus()
     
@@ -621,12 +674,9 @@ class MacTubeApp:
                     # Stocker la tâche comme active
                     self.active_tasks[task.id] = task
                     
-                    # Lancer le téléchargement
-                    download_thread = threading.Thread(
-                        target=self._download_task_thread, 
-                        args=(task,), 
-                        daemon=True
-                    )
+                    # Lancer le téléchargement (vidéo ou audio)
+                    handler = self._download_task_thread if getattr(task, 'task_type', 'video') == 'video' else self._download_audio_task_thread
+                    download_thread = threading.Thread(target=handler, args=(task,), daemon=True)
                     download_thread.start()
                     self.download_threads.append(download_thread)
                     
@@ -651,9 +701,12 @@ class MacTubeApp:
                 except:
                     pass
     
-    def add_to_queue(self, url, quality, output_format, filename, download_path):
-        """Ajoute une tâche à la file d'attente"""
-        task = DownloadTask(url, quality, output_format, filename, download_path)
+    def add_to_queue(self, url, quality, output_format, filename, download_path, task_type="video", silent: bool = False):
+        """Ajoute une tâche à la file d'attente
+        
+        silent: si True, n'affiche pas de pop-up de confirmation (utilisé par le bulk)
+        """
+        task = DownloadTask(url, quality, output_format, filename, download_path, task_type)
         self.download_queue.put(task)
         
         # Mettre à jour l'interface
@@ -663,13 +716,46 @@ class MacTubeApp:
         self._schedule_queue_updates()
         
         print(f"✅ Tâche ajoutée à la file d'attente: {task.id}")
+        
+        # Afficher une pop-up de confirmation sauf en mode silencieux
+        if not silent:
+            self._show_queue_confirmation(task, task_type)
+        
         return task
+    
+    def _show_queue_confirmation(self, task, task_type):
+        """Affiche une pop-up de confirmation pour l'ajout à la file d'attente"""
+        # Utiliser le vrai titre de la vidéo au lieu du placeholder %(title)s
+        display_filename = task.video_title if hasattr(task, 'video_title') and task.video_title else task.filename
+        
+        if task_type == "audio":
+            # Pop-up pour l'extraction audio
+            messagebox.showinfo(
+                "Extraction audio ajoutée", 
+                f"🎵 Extraction audio ajoutée à la file d'attente!\n\n"
+                f"URL: {task.url}\n"
+                f"Qualité: {task.quality}\n"
+                f"Format: {task.output_format}\n"
+                f"Fichier: {display_filename}\n"
+                f"Dossier: {task.download_path}"
+            )
+        else:
+            # Pop-up pour le téléchargement vidéo
+            messagebox.showinfo(
+                "Téléchargement ajouté", 
+                f"📥 Téléchargement ajouté à la file d'attente!\n\n"
+                f"URL: {task.url}\n"
+                f"Qualité: {task.quality}\n"
+                f"Format: {task.output_format}\n"
+                f"Fichier: {display_filename}\n"
+                f"Dossier: {task.download_path}"
+            )
     
     def _schedule_queue_updates(self):
         """Programme des mises à jour régulières de la file d'attente"""
         if hasattr(self, 'queue_frame'):
             # Mettre à jour toutes les 2 secondes
-            self.root.after(2000, self._refresh_queue_list)
+            self.root.after(2000, self.schedule_queue_refresh)
             # Programmer la prochaine mise à jour
             self.root.after(2000, self._schedule_queue_updates)
     
@@ -677,7 +763,7 @@ class MacTubeApp:
         """Met à jour l'affichage de la file d'attente"""
         if hasattr(self, 'queue_frame'):
             # Mettre à jour la liste des tâches
-            self._refresh_queue_list()
+            self.schedule_queue_refresh()
     
     def _download_task_thread(self, task):
         """Thread pour télécharger une tâche de la file d'attente"""
@@ -688,19 +774,18 @@ class MacTubeApp:
             
             # Configuration yt-dlp pour cette tâche
             format_selector = self._get_format_selector(task.quality)
-            output_template = os.path.join(task.download_path, f"{task.filename}.%(ext)s")
+            # Nom de sortie sans ID (préserve le titre complet)
+            output_template = os.path.join(task.download_path, f"%(title)s.%(ext)s")
             
             print(f"🔧 Configuration yt-dlp:")
             print(f"   Format: {format_selector}")
             print(f"   Sortie: {output_template}")
             print(f"   Format final: {task.output_format.lstrip('.')}")
             
-            # Obtenir le chemin FFmpeg du projet
-            ffmpeg_path = get_ffmpeg_path()
+            # Utiliser le chemin FFmpeg stocké au démarrage
+            ffmpeg_path = self.ffmpeg_path
             if not ffmpeg_path:
                 raise Exception("FFmpeg non trouvé dans le projet")
-            
-            print(f"🔧 Utilisation de FFmpeg: {ffmpeg_path}")
             
             ydl_opts = {
                 'format': format_selector,
@@ -743,6 +828,80 @@ class MacTubeApp:
             
             task.status = f"Erreur: {str(e)}"
             self.root.after(0, lambda: self._update_task_status(task))
+
+    def _download_audio_task_thread(self, task):
+        """Thread pour extraire l'audio en file d'attente (utilise la config de mactube_audio.py)"""
+        try:
+            print(f"🎵 Début extraction audio: {task.id} - {task.url}")
+            task.status = "Extraction en cours..."
+            self.root.after(0, lambda: self._update_task_status(task))
+
+            # Nettoyer l'URL
+            clean_url = self.clean_youtube_url(task.url)
+
+            # Utiliser le chemin FFmpeg stocké au démarrage
+            ffmpeg_path = self.ffmpeg_path
+            if not ffmpeg_path:
+                raise Exception("FFmpeg non trouvé dans le projet")
+
+            # Sélection du format audio
+            def audio_selector_from_quality(quality: str) -> str:
+                if '128' in quality:
+                    return "bestaudio[abr<=128]/bestaudio"
+                if '192' in quality:
+                    return "bestaudio[abr<=192]/bestaudio"
+                if '320' in quality:
+                    return "bestaudio[abr<=320]/bestaudio"
+                return "bestaudio"
+
+            format_selector = audio_selector_from_quality(task.quality)
+
+            # Chemin de sortie modèle sans ID (préserve le titre)
+            output_template = os.path.join(task.download_path, f"%(title)s.%(ext)s")
+
+            # Post-processeur FFmpeg pour forcer le codec final
+            ydl_opts = {
+                'format': format_selector,
+                'outtmpl': output_template,
+                'quiet': True,
+                'no_warnings': True,
+                # Garder les caractères usuels du titre (macOS supporte la plupart)
+                'trim_file_name': 180,
+                'postprocessors': [{
+                    'key': 'FFmpegExtractAudio',
+                    # Mapper ".ogg" vers le codec FFmpeg 
+                    'preferredcodec': ('vorbis' if task.output_format.lstrip('.') == 'ogg' else task.output_format.lstrip('.')),
+                    'preferredquality': '192',
+                }],
+                'progress_hooks': [lambda d: self._task_progress_hook(d, task)],
+                'ffmpeg_location': ffmpeg_path,
+            }
+
+            print(f"🔧 Audio yt-dlp: format={format_selector}, codec={task.output_format}")
+
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                result = ydl.download([clean_url])
+
+            task.status = "Terminé ✅"
+            task.progress = 100
+            if task.id in self.active_tasks:
+                del self.active_tasks[task.id]
+            self.root.after(0, lambda: self._update_task_status(task))
+
+            # Historique
+            self.history.add_download(
+                task.filename, task.url, task.download_path,
+                task.output_format, task.quality
+            )
+
+            print(f"✅ Extraction audio terminée: {task.id}")
+
+        except Exception as e:
+            print(f"❌ Erreur extraction audio: {task.id} - {e}")
+            import traceback
+            traceback.print_exc()
+            task.status = f"Erreur: {str(e)}"
+            self.root.after(0, lambda: self._update_task_status(task))
     
     def _task_progress_hook(self, d, task):
         """Hook de progression pour une tâche"""
@@ -765,97 +924,177 @@ class MacTubeApp:
             task.status = "Téléchargement en cours..."
             
             # Rafraîchir l'interface en temps réel
-            self.root.after(0, self._refresh_queue_list)
+            self.root.after(0, self.schedule_queue_refresh)
     
     def _update_task_status(self, task):
         """Met à jour le statut d'une tâche dans l'interface"""
         if hasattr(self, 'queue_frame'):
-            self._refresh_queue_list()
+            self.schedule_queue_refresh()
     
     def _get_format_selector(self, quality):
         """Retourne le sélecteur de format yt-dlp pour une qualité donnée"""
-        # Logique similaire à celle existante mais adaptée pour yt-dlp
-        if 'Ultra HD' in quality or '1620' in quality:
+        # Extraire la hauteur de la qualité sélectionnée
+        import re
+        
+        # Patterns pour extraire la résolution
+        patterns = [
+            r'(\d+)p',  # 1080p, 720p, etc.
+            r'(\d+)x\d+',  # 1920x1080, etc.
+            r'(\d+)',  # 1080, 720, etc.
+        ]
+        
+        height = None
+        for pattern in patterns:
+            match = re.search(pattern, quality)
+            if match:
+                height = int(match.group(1))
+                break
+        
+        if height:
+            # Créer un sélecteur spécifique pour cette hauteur
+            if height >= 2160:
+                return f"bestvideo[height<={height}]+bestaudio"
+            elif height >= 1080:
+                return f"bestvideo[height<={height}]+bestaudio"
+            elif height >= 720:
+                return f"bestvideo[height<={height}]+bestaudio"
+            elif height >= 480:
+                return f"bestvideo[height<={height}]+bestaudio"
+            else:
+                return f"bestvideo[height<={height}]+bestaudio"
+        
+        # Fallback pour les qualités non reconnues
+        if '4K' in quality or '2160' in quality:
+            return "bestvideo[height<=2160]+bestaudio"
+        elif 'Ultra HD' in quality or '1620' in quality:
             return "bestvideo[height<=1620]+bestaudio"
+        elif '1440p' in quality or 'QHD' in quality:
+            return "bestvideo[height<=1440]+bestaudio"
         elif 'Full HD' in quality or '1080' in quality:
             return "bestvideo[height<=1080]+bestaudio"
         elif 'HD+' in quality or '810' in quality:
             return "bestvideo[height<=810]+bestaudio"
+        elif 'HD' in quality and '720' in quality:
+            return "bestvideo[height<=720]+bestaudio"
         elif 'HD' in quality and '540' in quality:
             return "bestvideo[height<=540]+bestaudio"
+        elif 'SD' in quality and '480' in quality:
+            return "bestvideo[height<=480]+bestaudio"
         elif 'SD' in quality and '360' in quality:
             return "bestvideo[height<=360]+bestaudio"
         elif 'SD' in quality and '270' in quality:
             return "bestvideo[height<=270]+bestaudio"
+        elif 'Audio' in quality:
+            return "bestaudio"
         else:
+            # Par défaut, utiliser la meilleure qualité disponible
             return "bestvideo+bestaudio"
     
     def _refresh_queue_list(self):
-        """Met à jour la liste des tâches de la file d'attente"""
+        """Met à jour la liste des tâches de la file d'attente avec alignement parfait"""
         if hasattr(self, 'queue_frame'):
-            # Nettoyer la liste existante
-            for widget in self.queue_list_container.winfo_children():
-                widget.destroy()
-            
             # Compter les tâches
-            queue_size = self.download_queue.qsize()
             active_downloads = len(self.active_tasks)
+            try:
+                waiting_tasks = list(self.download_queue.queue)
+            except Exception:
+                waiting_tasks = []
+            queue_size = len(waiting_tasks)
             
             # Mettre à jour le label d'information
             self.queue_info_label.configure(
                 text=f"📊 Téléchargements en cours: {active_downloads} | En attente: {queue_size}"
             )
             
-            # Afficher les tâches actives avec leurs vraies données
+            # Nettoyer la liste existante (garder les en-têtes)
+            widgets_to_remove = []
+            for widget in self.queue_list_container.winfo_children():
+                if widget.grid_info()['row'] >= 2:  # Garder en-têtes et séparateur
+                    widgets_to_remove.append(widget)
+            
+            for widget in widgets_to_remove:
+                widget.destroy()
+            
+            # Réinitialiser le compteur de lignes
+            self.queue_row_counter = 2
+            
+            # Créer les lignes pour les tâches actives
             for task_id, task in self.active_tasks.items():
-                # Créer une ligne avec les vraies informations de la tâche
                 self._create_download_row(
-                    title=task.video_title[:50] + "..." if len(task.video_title) > 50 else task.video_title,
+                    title=self._truncate_text(task.video_title, 42),
                     status=task.status,
                     progress=task.progress,
                     speed=task.speed,
                     eta=task.eta,
-                    state="active"
+                    state="active",
+                    file_display=self._get_file_display(task)
                 )
             
-            # Afficher les tâches en attente
-            if queue_size > 0:
-                # Créer une ligne pour chaque tâche en attente
-                for i in range(queue_size):
-                    self._create_download_row(
-                        title=f"Tâche en attente {i+1}",
-                        status="En attente",
-                        progress=0,
-                        speed="0 MB/s",
-                        eta="En attente",
-                        state="waiting"
-                    )
-            
-            # Si aucune tâche, afficher un message
-            if active_downloads == 0 and queue_size == 0:
-                empty_label = MacTubeTheme.create_label_body(
-                    self.queue_list_container,
-                    "📋 Aucune tâche dans la file d'attente"
+            # Créer les lignes pour les tâches en attente
+            for task in waiting_tasks:
+                self._create_download_row(
+                    title=self._truncate_text(task.video_title, 42),
+                    status="En attente",
+                    progress=0,
+                    speed="0 MB/s",
+                    eta="En attente",
+                    state="waiting",
+                    file_display=self._get_file_display(task)
                 )
-                empty_label.pack(anchor="center", pady=20)
     
-    def _create_download_row(self, title, status, progress, speed, eta, state):
-        """Crée une ligne d'affichage pour un téléchargement"""
-        row_frame = ctk.CTkFrame(self.queue_list_container, fg_color="transparent")
-        row_frame.pack(fill="x", pady=2)
+    def schedule_queue_refresh(self, delay_ms: int = 120):
+        """Planifie un rafraîchissement de la file d'attente avec débounce anti-flickering"""
+        if hasattr(self, 'root') and self._queue_refresh_job:
+            self.root.after_cancel(self._queue_refresh_job)
+        if hasattr(self, 'root'):
+            self._queue_refresh_job = self.root.after(delay_ms, self._refresh_queue_list)
+    
+    def _show_empty_state(self):
+        """Affiche l'état vide de la file d'attente"""
+        # Nettoyer les anciennes lignes
+        widgets_to_remove = []
+        for widget in self.queue_list_container.winfo_children():
+            if widget.grid_info()['row'] >= 2:  # Garder en-têtes et séparateur
+                widgets_to_remove.append(widget)
         
-        # Titre de la tâche
-        title_label = MacTubeTheme.create_label_body(row_frame, title)
-        title_label.configure(width=200)
-        title_label.pack(side="left", padx=(0, 20), anchor="w")
+        for widget in widgets_to_remove:
+            widget.destroy()
         
-        # Barre de progression
-        progress_frame = ctk.CTkFrame(row_frame, fg_color="transparent")
-        progress_frame.configure(width=150)
-        progress_frame.pack(side="left", padx=(0, 20))
+        # Afficher le message d'état vide
+        empty_label = MacTubeTheme.create_label_body(
+            self.queue_list_container,
+            "📋 Aucune tâche dans la file d'attente"
+        )
+        empty_label.grid(row=2, column=0, columnspan=6, pady=20)
+    
+
+    
+    def _get_file_display(self, task):
+        """Génère l'affichage du nom de fichier pour une tâche"""
+        if getattr(task, 'task_type', 'video') == 'audio':
+            ext = (task.output_format or 'mp3').lstrip('.')
+        else:
+            ext = 'mp4'
+        return self._truncate_text(f"{task.video_title}.{ext}", 28)
+    
+
+    
+    def _create_download_row(self, title, status, progress, speed, eta, state, file_display=None):
+        """Crée une ligne d'affichage pour un téléchargement avec alignement parfait"""
+        # Utiliser la grille globale du conteneur principal
+        current_row = self.queue_row_counter
+        
+        # Titre de la tâche (colonne 0) - aligné à gauche
+        title_label = MacTubeTheme.create_label_body(self.queue_list_container, title)
+        title_label.grid(row=current_row, column=0, sticky="w", padx=5, pady=2)
+        
+        # Barre de progression (colonne 1) - centrée
+        progress_frame = ctk.CTkFrame(self.queue_list_container, fg_color="transparent")
+        progress_frame.grid(row=current_row, column=1, sticky="ew", padx=5, pady=2)
+        progress_frame.grid_columnconfigure(0, weight=1)
         
         progress_bar = ctk.CTkProgressBar(progress_frame, width=120, height=12)
-        progress_bar.pack()
+        progress_bar.grid(row=0, column=0, pady=2)
         progress_bar.set(progress / 100)
         
         # Couleur de la barre selon le statut
@@ -867,39 +1106,41 @@ class MacTubeApp:
             progress_bar.configure(progress_color="blue")
         
         progress_label = MacTubeTheme.create_label_body(progress_frame, f"{progress:.1f}%")
-        progress_label.pack()
+        progress_label.grid(row=1, column=0, pady=2)
         
-        # Vitesse
-        speed_label = MacTubeTheme.create_label_body(row_frame, speed)
-        speed_label.configure(width=80)
-        speed_label.pack(side="left", padx=(0, 20), anchor="w")
+        # Vitesse (colonne 2) - centrée
+        speed_label = MacTubeTheme.create_label_body(self.queue_list_container, speed)
+        speed_label.grid(row=current_row, column=2, sticky="ew", padx=5, pady=2)
         
-        # Temps restant
-        eta_label = MacTubeTheme.create_label_body(row_frame, eta)
-        eta_label.configure(width=80)
-        eta_label.pack(side="left", padx=(0, 20), anchor="w")
+        # Temps restant (colonne 3) - centré
+        eta_label = MacTubeTheme.create_label_body(self.queue_list_container, eta)
+        eta_label.grid(row=current_row, column=3, sticky="ew", padx=5, pady=2)
         
-        # Statut
+        # Statut (colonne 4) - centré
         status_color = "green" if state == "active" else "orange" if state == "waiting" else "red"
-        status_label = MacTubeTheme.create_label_body(row_frame, status)
-        status_label.configure(width=100)
-        status_label.pack(side="left", padx=(0, 20), anchor="w")
+        status_label = MacTubeTheme.create_label_body(self.queue_list_container, status)
+        status_label.grid(row=current_row, column=4, sticky="ew", padx=5, pady=2)
         
-        # Actions
-        actions_frame = ctk.CTkFrame(row_frame, fg_color="transparent")
-        actions_frame.configure(width=100)
-        actions_frame.pack(side="left")
+        # Fichier (colonne 5) - affiche le nom de fichier tronqué + bouton
+        file_frame = ctk.CTkFrame(self.queue_list_container, fg_color="transparent")
+        file_frame.grid(row=current_row, column=5, sticky="ew", padx=5, pady=2)
+        file_frame.grid_columnconfigure(0, weight=1)
+        file_label = MacTubeTheme.create_label_body(file_frame, file_display or self._truncate_text(title, 28))
+        file_label.grid(row=0, column=0, sticky="w")
         
         if state == "active":
             pause_btn = MacTubeTheme.create_button_secondary(
-                actions_frame, "⏸️", command=lambda: self._pause_download(title), width=30
+                file_frame, "⏸️", command=lambda: self._pause_download(title), width=30
             )
-            pause_btn.pack(side="left", padx=2)
+            pause_btn.grid(row=0, column=1, padx=4)
         elif state == "waiting":
             remove_btn = MacTubeTheme.create_button_secondary(
-                actions_frame, "❌", command=lambda: self._remove_from_queue(title), width=30
+                file_frame, "❌", command=lambda: self._remove_from_queue(title), width=30
             )
-            remove_btn.pack(side="left", padx=2)
+            remove_btn.grid(row=0, column=1, padx=4)
+        
+        # Incrémenter le compteur de lignes
+        self.queue_row_counter += 1
     
     def _pause_download(self, title):
         """Met en pause un téléchargement spécifique"""
@@ -934,6 +1175,21 @@ class MacTubeApp:
         current_tab = getattr(self.navigation, 'current_tab', 'download')
         self.show_tab(current_tab)
     
+    # -------- Utilitaires UI --------
+    def _truncate_text(self, text: str, max_chars: int = 38) -> str:
+        """Tronque le texte pour l'affichage UI uniquement.
+
+        Ne modifie pas les noms de fichiers réels. Ajoute une ellipse si dépassement.
+        """
+        if not isinstance(text, str):
+            return ""
+        text = text.strip()
+        if len(text) <= max_chars:
+            return text
+        # Garder fin de chaîne utile (ex: extension) si présent
+        head = max_chars - 1
+        return text[:head] + "…"
+
     def create_context_menu(self):
         """Crée le menu contextuel pour le champ URL"""
         try:
@@ -995,6 +1251,29 @@ class MacTubeApp:
         except:
             pass
     
+    def clean_youtube_url(self, url):
+        """Nettoie l'URL YouTube en supprimant les paramètres de playlist"""
+        # Solution simple et efficace : couper avant &list=
+        if '&list=' in url:
+            clean_url = url.split('&list=')[0]
+            print(f"🔧 URL nettoyée (suppression playlist): {url} → {clean_url}")
+            return clean_url
+        
+        # Si pas de &list=, vérifier s'il y a d'autres paramètres problématiques
+        if '&start_radio=' in url or '&feature=' in url or '&ab_channel=' in url:
+            # Extraire l'ID de la vidéo et reconstruire une URL propre
+            import re
+            match = re.search(r'youtube\.com/watch\?v=([a-zA-Z0-9_-]{11})', url)
+            if match:
+                video_id = match.group(1)
+                clean_url = f"https://www.youtube.com/watch?v={video_id}"
+                print(f"🔧 URL nettoyée (suppression paramètres): {url} → {clean_url}")
+                return clean_url
+        
+        # Si l'URL est déjà propre, la retourner telle quelle
+        print(f"✅ URL déjà propre: {url}")
+        return url
+    
     def validate_youtube_url(self, url):
         """Valide l'URL YouTube"""
         patterns = [
@@ -1019,23 +1298,21 @@ class MacTubeApp:
             messagebox.showerror("Erreur", "URL YouTube invalide")
             return
         
+        # Nettoyer l'URL avant l'analyse
+        clean_url = self.clean_youtube_url(url)
+        print(f"🔧 URL originale: {url}")
+        print(f"🔧 URL nettoyée: {clean_url}")
+        
         # Désactiver le bouton pendant l'analyse
         self.analyze_button.configure(state="disabled", text="⏳ Analyse...")
         self.status_label.configure(text="🔍 Analyse de la vidéo en cours...")
         
-        # Lancer l'analyse dans un thread
-        threading.Thread(target=self._analyze_video_thread, args=(url,), daemon=True).start()
+        # Lancer l'analyse dans un thread avec l'URL nettoyée
+        threading.Thread(target=self._analyze_video_thread, args=(clean_url,), daemon=True).start()
     
     def _analyze_video_thread(self, url):
         """Thread pour l'analyse de la vidéo avec yt-dlp"""
         try:
-            # Obtenir le chemin FFmpeg du projet
-            ffmpeg_path = get_ffmpeg_path()
-            if not ffmpeg_path:
-                print("⚠️ FFmpeg non trouvé dans le projet, utilisation du système")
-            else:
-                print(f"🔧 Utilisation de FFmpeg: {ffmpeg_path}")
-            
             # Configuration yt-dlp
             ydl_opts = {
                 'quiet': True,
@@ -1044,8 +1321,8 @@ class MacTubeApp:
             }
             
             # Ajouter FFmpeg du projet si disponible
-            if ffmpeg_path:
-                ydl_opts['ffmpeg_location'] = ffmpeg_path
+            if self.ffmpeg_path:
+                ydl_opts['ffmpeg_location'] = self.ffmpeg_path
             
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 # Extraire les informations
@@ -1262,17 +1539,17 @@ class MacTubeApp:
             response = session.get(url, timeout=10)
             if response.status_code == 200:
                 # Charger l'image avec Pillow
-                from PIL import Image, ImageTk
+                from PIL import Image
                 image = Image.open(io.BytesIO(response.content))
                 
                 # Redimensionner à 320x180 en gardant les proportions
                 image.thumbnail((320, 180), Image.Resampling.LANCZOS)
                 
-                # Convertir pour tkinter
-                photo = ImageTk.PhotoImage(image)
+                # Convertir pour CustomTkinter (meilleure compatibilité HiDPI)
+                ctk_image = ctk.CTkImage(light_image=image, size=(320, 180))
                 
                 # Mettre à jour la miniature
-                self.thumbnail.set_image(photo)
+                self.thumbnail.set_image(ctk_image)
                 
         except Exception as e:
             error_text = "Erreur de chargement\nde la miniature"
@@ -1358,16 +1635,8 @@ class MacTubeApp:
         self.quality_combo.set("Analyser d'abord une vidéo")
         self.filename_entry.delete(0, tk.END)
         
-        # Afficher un message de confirmation
-        messagebox.showinfo(
-            "Tâche ajoutée", 
-            f"Téléchargement ajouté à la file d'attente!\n\n"
-            f"URL: {self.url_entry.get().strip()}\n"
-            f"Qualité: {selected_quality}\n"
-            f"Format: {output_format}\n"
-            f"Fichier: {filename}\n"
-            f"Dossier: {download_path}"
-        )
+        # Pas besoin de pop-up ici car _show_queue_confirmation() s'en charge déjà
+        # Le pop-up est affiché automatiquement par add_to_queue()
     
     def _download_video_thread(self, stream_info, output_format):
         """Thread pour le téléchargement de la vidéo avec yt-dlp"""
@@ -1394,13 +1663,6 @@ class MacTubeApp:
                 # Pour audio seul
                 format_selector = stream_info['format_id']
             
-            # Obtenir le chemin FFmpeg du projet
-            ffmpeg_path = get_ffmpeg_path()
-            if not ffmpeg_path:
-                print("⚠️ FFmpeg non trouvé dans le projet, utilisation du système")
-            else:
-                print(f"🔧 Utilisation de FFmpeg: {ffmpeg_path}")
-            
             ydl_opts = {
                 'format': format_selector,
                 'outtmpl': output_path,
@@ -1410,8 +1672,8 @@ class MacTubeApp:
             }
             
             # Ajouter FFmpeg du projet si disponible
-            if ffmpeg_path:
-                ydl_opts['ffmpeg_location'] = ffmpeg_path
+            if self.ffmpeg_path:
+                ydl_opts['ffmpeg_location'] = self.ffmpeg_path
             
             # Hook de progression pour yt-dlp
             def progress_hook(d):
@@ -1564,6 +1826,10 @@ class MacTubeApp:
             # Mettre à jour les frames et conteneurs
             self._update_frame_colors()
             
+            # Mettre à jour aussi l'onglet Audio si présent
+            if hasattr(self, 'audio_extractor') and hasattr(self.audio_extractor, 'update_theme'):
+                self.audio_extractor.update_theme()
+
             # Forcer la mise à jour de l'interface
             self.root.update_idletasks()
             self.root.update()
@@ -1775,6 +2041,44 @@ class MacTubeApp:
     def run(self):
         """Lance l'application"""
         self.root.mainloop()
+
+    def clear_history_on_exit(self):
+        """Vide l'historique à la fermeture de l'application"""
+        try:
+            # Vider la liste d'historique
+            if hasattr(self, 'history_list'):
+                self.history_list.delete(0, tk.END)
+            
+            # Vider la liste des tâches
+            if hasattr(self, 'history_tasks'):
+                self.history_tasks.clear()
+            
+            # Vider l'historique principal et sauvegarder
+            if hasattr(self, 'history'):
+                self.history.clear()
+                print("🧹 Historique vidé avec succès")
+            else:
+                print("⚠️  Module d'historique non trouvé")
+            
+        except Exception as e:
+            print(f"❌ Erreur lors du nettoyage: {e}")
+
+    def on_closing(self):
+        """Gestionnaire de fermeture avec nettoyage automatique de l'historique"""
+        try:
+            # Nettoyer l'historique automatiquement
+            self.clear_history_on_exit()
+            
+            # Fermeture normale
+            if hasattr(self, 'root'):
+                self.root.quit()
+                self.root.destroy()
+        except Exception as e:
+            print(f"❌ Erreur lors de la fermeture: {e}")
+            # Fermeture forcée en cas d'erreur
+            if hasattr(self, 'root'):
+                self.root.quit()
+                self.root.destroy()
 
 class MacTubeHistory:
     """Gestionnaire d'historique pour MacTube"""
