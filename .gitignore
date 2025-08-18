@@ -46,3 +46,6 @@ config_local.py
 # Installateurs et builds finaux
 MacTube-Installer.dmg
 *.dmg
+
+# Archives source (uniquement dans les releases GitHub)
+MacTube-Source-*.tar.gz
