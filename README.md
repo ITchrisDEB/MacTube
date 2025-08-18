@@ -1,12 +1,12 @@
-# MacTube - YouTube Downloader pour macOS
+# MacTube - YouTube Downloader pour MacOS
 
 <div align="center">
 
-![macOS](https://img.shields.io/badge/macOS-14.0+-000000?style=for-the-badge&logo=apple&logoColor=white)
+![MacOS](https://img.shields.io/badge/MacOS-14.0+-000000?style=for-the-badge&logo=apple&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3.8+-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)
 
-**Une application native macOS élégante et moderne pour télécharger des vidéos YouTube en haute qualité**
+**Une application native MacOS élégante et moderne pour télécharger des vidéos YouTube en haute qualité**
 
 </div>
 
@@ -14,14 +14,13 @@
 
 ## ✨ Fonctionnalités
 
-- **Interface native macOS** avec thèmes clair/sombre automatiques
+- **Interface native MacOS** avec thèmes clair/sombre automatiques
 - **Navigation par onglets** organisée (Télécharger, Historique, File d'attente, Paramètres)
 - **Téléchargement HD** jusqu'à 4K avec `yt-dlp`
 - **File d'attente** pour téléchargements multiples
 - **Historique persistant** des téléchargements
 - **Formats multiples** : MP4, MKV, WebM, AVI
 - **FFmpeg intégré** pour la conversion automatique
-- **Aucune installation système** requise
 
 ---
 
@@ -92,7 +91,7 @@ pip install -r requirements.txt
 
 ## 📋 Prérequis
 
-- **macOS** 14.0+ (Sonoma)
+- **MacOS** 14.0+ (Sonoma)
 - **Python** 3.8+ (pour le build)
 - **FFmpeg** (inclus dans le bundle)
 
@@ -111,13 +110,6 @@ pip install -r requirements.txt
 **❌ "Permission denied" sur mactube.sh**
 ```bash
 chmod +x mactube.sh
-```
-
-**❌ Erreurs de dépendances**
-```bash
-# Supprimer et recréer l'environnement virtuel
-rm -rf venv
-./mactube.sh
 ```
 
 **❌ FFmpeg manquant**
@@ -198,7 +190,7 @@ Ce projet est sous licence MIT. Voir le fichier [LICENSE](LICENSE) pour plus de 
 
 <div align="center">
 
-**MacTube** - Téléchargez YouTube en beauté sur macOS
+**MacTube** - Téléchargez YouTube en beauté sur MacOS
 
 [![GitHub](https://img.shields.io/badge/GitHub-ITchrisDEB-181717?style=for-the-badge&logo=github)](https://github.com/ITchrisDEB)
 
