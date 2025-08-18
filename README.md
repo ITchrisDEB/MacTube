@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![macOS](https://img.shields.io/badge/macOS-10.14+-000000?style=for-the-badge&logo=apple&logoColor=white)
+![macOS](https://img.shields.io/badge/macOS-14.0+-000000?style=for-the-badge&logo=apple&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3.8+-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)
 
@@ -45,7 +45,7 @@ cd MacTube
 ./mactube.sh
 ```
 
-**Le script `mactube.sh` fait TOUT automatiquement :**
+**Le script `mactube.sh` est automatiquement :**
 - Vérifie Python 3
 - Crée l'environnement virtuel
 - Installe les dépendances
@@ -92,7 +92,7 @@ pip install -r requirements.txt
 
 ## 📋 Prérequis
 
-- **macOS** 10.14+ (Mojave)
+- **macOS** 14.0+ (Sonoma)
 - **Python** 3.8+ (pour le build)
 - **FFmpeg** (inclus dans le bundle)
 
