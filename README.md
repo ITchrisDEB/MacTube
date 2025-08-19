@@ -81,8 +81,8 @@ cd MacTube
 ```bash
 git clone https://github.com/ITchrisDEB/MacTube.git
 cd MacTube
-python3 -m venv venv
-source venv/bin/activate
+python3 -m venv mactube
+source mactube/bin/activate
 pip install -r requirements.txt
 ./download_ffmpeg.sh
 python3 mactube.py
@@ -92,11 +92,11 @@ python3 mactube.py
 ```cmd
 git clone https://github.com/ITchrisDEB/MacTube.git
 cd MacTube
-python -m venv venv
-venv\Scripts\activate
+python -m venv mactube
+.\mactube\Scripts\Activate.ps1
 pip install -r requirements.txt
 download_ffmpeg.bat
-python mactube.py
+python.exe mactube.py
 ```
 
 ### Option 1 : Installateur DMG (Recommandé)
@@ -128,8 +128,10 @@ pip install -r requirements.txt
 
 ## 📋 Prérequis
 
-- **MacOS** 14.0+ (Sonoma)
-- **Python** 3.8+ (pour le build)
+- **MacOS** 14.0+ (Sonoma) / **Windows** 10+
+- **Python** 3.8+ (pour le build et l'exécution)
+- **pip** (gestionnaire de paquets Python)
+- **git** (contrôle de version)
 - **FFmpeg** (inclus dans le bundle)
 
 ---
