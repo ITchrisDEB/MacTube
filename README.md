@@ -76,6 +76,8 @@ cd MacTube
 - Lance l'application
 
 ### Lancement Manuel en Python
+
+#### Sur macOS/Linux :
 ```bash
 git clone https://github.com/ITchrisDEB/MacTube.git
 cd MacTube
@@ -84,6 +86,17 @@ source venv/bin/activate
 pip install -r requirements.txt
 ./download_ffmpeg.sh
 python3 mactube.py
+```
+
+#### Sur Windows :
+```cmd
+git clone https://github.com/ITchrisDEB/MacTube.git
+cd MacTube
+python -m venv venv
+venv\Scripts\activate
+pip install -r requirements.txt
+download_ffmpeg.bat
+python mactube.py
 ```
 
 ### Option 1 : Installateur DMG (Recommandé)
