@@ -94,7 +94,8 @@ git clone https://github.com/ITchrisDEB/MacTube.git
 cd MacTube
 python -m venv mactube
 
-# IMPORTANT : Autoriser l'exécution de scripts download_ffmpeg.bat  
+# IMPORTANT : Dans powershell, Autoriser l'exécution du scripts.
+
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 
 .\mactube\Scripts\Activate.ps1
