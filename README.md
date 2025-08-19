@@ -23,6 +23,7 @@
 - **Historique persistant** des téléchargements avec nettoyage automatique
 - **Formats vidéo multiples** : MP4, MKV, WebM, AVI, MOV
 - **FFmpeg intégré** pour la conversion automatique et le post-traitement
+- **Compatibilité Windows** et ffmpeg.exe
 
 ---
 
