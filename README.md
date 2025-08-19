@@ -93,6 +93,10 @@ python3 mactube.py
 git clone https://github.com/ITchrisDEB/MacTube.git
 cd MacTube
 python -m venv mactube
+
+# IMPORTANT : Autoriser l'exécution de scripts download_ffmpeg.bat  
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+
 .\mactube\Scripts\Activate.ps1
 pip install -r requirements.txt
 download_ffmpeg.bat
