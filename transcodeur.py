@@ -72,6 +72,9 @@ class MacTubeTranscoder:
         
         # Section 3: Conversion Audio
         self.create_audio_conversion_section()
+        
+        # Appliquer le thème initial
+        self.update_theme()
     
     def create_video_conversion_section(self):
         """Section 1: Conversion Vidéo"""
@@ -86,7 +89,7 @@ class MacTubeTranscoder:
         ).pack(pady=(20, 15), padx=20, anchor="w")
         
         # Contenu
-        content_frame = ctk.CTkFrame(video_card, fg_color="transparent")
+        content_frame = ctk.CTkFrame(video_card.content_frame, fg_color="transparent")
         content_frame.pack(fill="both", expand=True, padx=20, pady=(0, 20))
         
         # Sélection du fichier
@@ -150,7 +153,7 @@ class MacTubeTranscoder:
         ).pack(pady=(20, 15), padx=20, anchor="w")
         
         # Contenu
-        content_frame = ctk.CTkFrame(audio_card, fg_color="transparent")
+        content_frame = ctk.CTkFrame(audio_card.content_frame, fg_color="transparent")
         content_frame.pack(fill="both", expand=True, padx=20, pady=(0, 20))
         
         # Sélection du fichier vidéo
@@ -232,7 +235,7 @@ class MacTubeTranscoder:
         ).pack(pady=(20, 15), padx=20, anchor="w")
         
         # Contenu
-        content_frame = ctk.CTkFrame(audio_conv_card, fg_color="transparent")
+        content_frame = ctk.CTkFrame(audio_conv_card.content_frame, fg_color="transparent")
         content_frame.pack(fill="both", expand=True, padx=20, pady=(0, 20))
         
         # Sélection du fichier audio
@@ -519,8 +522,41 @@ class MacTubeTranscoder:
     
     def update_theme(self):
         """Met à jour le thème"""
-        # Cette méthode sera appelée lors du changement de thème
-        pass
+        try:
+            # Récupérer le thème actuel depuis l'app principale
+            if self.app and hasattr(self.app, 'current_theme'):
+                current_theme = self.app.current_theme
+            else:
+                # Fallback : détecter le thème système
+                current_theme = "Dark" if ctk.get_appearance_mode() == "Dark" else "Light"
+            
+            # Appliquer le thème aux composants
+            if current_theme == "Dark":
+                # Thème sombre
+                self.transcoder_frame.configure(fg_color="transparent")
+                
+                # Mettre à jour les cartes si elles existent
+                for widget in self.transcoder_frame.winfo_children():
+                    if hasattr(widget, 'configure'):
+                        try:
+                            widget.configure(fg_color="transparent")
+                        except:
+                            pass
+                        
+                        # Mettre à jour les sous-composants
+                        for child in widget.winfo_children():
+                            if hasattr(child, 'configure'):
+                                try:
+                                    if isinstance(child, ctk.CTkFrame):
+                                        child.configure(fg_color="transparent")
+                                except:
+                                    pass
+            else:
+                # Thème clair
+                self.transcoder_frame.configure(fg_color="transparent")
+                
+        except Exception as e:
+            print(f"⚠️ Erreur lors de la mise à jour du thème: {e}")
     
     def pack(self, **kwargs):
         """Pack le frame principal"""
