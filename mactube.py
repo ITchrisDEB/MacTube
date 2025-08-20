@@ -651,10 +651,10 @@ class MacTubeApp:
         self.download_frame.pack_forget()
         if hasattr(self, 'audio_extractor'):
             self.audio_extractor.hide()
-        self.history_frame.pack_forget()
-        self.queue_frame.pack_forget()
         if hasattr(self, 'transcoder_frame'):
             self.transcoder_frame.pack_forget()
+        self.history_frame.pack_forget()
+        self.queue_frame.pack_forget()
         self.settings_frame.pack_forget()
         
         # Afficher le tab sélectionné
@@ -662,13 +662,13 @@ class MacTubeApp:
             self.download_frame.pack(fill="both", expand=True)
         elif tab_name == "audio" and hasattr(self, 'audio_extractor'):
             self.audio_extractor.pack(fill="both", expand=True)
+        elif tab_name == "transcoder":
+            if hasattr(self, 'transcoder_frame'):
+                self.transcoder_frame.pack(fill="both", expand=True)
         elif tab_name == "history":
             self.history_frame.pack(fill="both", expand=True)
         elif tab_name == "queue":
             self.queue_frame.pack(fill="both", expand=True)
-        elif tab_name == "transcoder":
-            if hasattr(self, 'transcoder_frame'):
-                self.transcoder_frame.pack(fill="both", expand=True)
         elif tab_name == "settings":
             self.settings_frame.pack(fill="both", expand=True)
     

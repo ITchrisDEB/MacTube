@@ -28,9 +28,9 @@ class MacTubeNavigation:
         # Boutons de navigation
         self.download_btn = self.create_nav_button("⬇️ Télécharger Vidéo", "download", 0)
         self.audio_btn = self.create_nav_button("🎵 Extraction Audio", "audio", 1)
-        self.history_btn = self.create_nav_button("📚 Historique", "history", 2)
-        self.queue_btn = self.create_nav_button("📋 File d'attente", "queue", 3)
-        self.transcoder_btn = self.create_nav_button("🔄 Transcodeur", "transcoder", 4)
+        self.transcoder_btn = self.create_nav_button("🔄 Transcodeur", "transcoder", 2)
+        self.history_btn = self.create_nav_button("📚 Historique", "history", 3)
+        self.queue_btn = self.create_nav_button("📋 File d'attente", "queue", 4)
         self.settings_btn = self.create_nav_button("⚙️ Paramètres", "settings", 5)
         
         # Indicateur de tab actif (corrigé)
@@ -71,7 +71,7 @@ class MacTubeNavigation:
     
     def tab_name_to_position(self, tab_name):
         """Convertit le nom du tab en position"""
-        positions = {"download": 0, "audio": 1, "history": 2, "queue": 3, "transcoder": 4, "settings": 5}
+        positions = {"download": 0, "audio": 1, "transcoder": 2, "history": 3, "queue": 4, "settings": 5}
         return positions.get(tab_name, 0)
 
 class MacTubeCard:
