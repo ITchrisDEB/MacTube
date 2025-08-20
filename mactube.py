@@ -28,6 +28,7 @@ from mactube_theme import MacTubeTheme, setup_mactube_theme
 from mactube_components import MacTubeNavigation, MacTubeCard, MacTubeProgressBar, MacTubeThumbnail
 from mactube_ffmpeg import get_ffmpeg_path
 from mactube_audio import MacTubeAudioExtractor
+from transcodeur import MacTubeTranscoder
 
 class DownloadTask:
     """Tâche de téléchargement pour la file d'attente"""
@@ -481,48 +482,8 @@ class MacTubeApp:
     
     def create_transcoder_tab(self):
         """Crée le tab du transcodeur"""
-        self.transcoder_frame = ctk.CTkFrame(
-            self.main_content,
-            fg_color="transparent"
-        )
-        
-        # Carte du transcodeur
-        self.transcoder_card = MacTubeCard(
-            self.transcoder_frame,
-            "🔄 Transcodeur Audio/Video"
-        )
-        self.transcoder_card.pack(fill="both", expand=True)
-        
-        # Zone de contenu principal
-        content_frame = ctk.CTkFrame(self.transcoder_card.content_frame, fg_color="transparent")
-        content_frame.pack(fill="both", expand=True, padx=20, pady=(0, 20))
-        
-        # Message d'information
-        info_label = MacTubeTheme.create_label_body(
-            content_frame,
-            "🚧 Interface du transcodeur en cours de développement..."
-        )
-        info_label.pack(pady=50)
-        
-        # Icône YouTube (utilisant l'icône téléchargée)
-        try:
-            from PIL import Image
-            import io
-            
-            # Créer un label pour l'icône
-            icon_label = MacTubeTheme.create_label_body(
-                content_frame,
-                "🎯 Nouvel onglet Transcodeur créé avec succès !"
-            )
-            icon_label.pack(pady=20)
-            
-        except ImportError:
-            # Fallback si PIL n'est pas disponible
-            fallback_label = MacTubeTheme.create_label_body(
-                content_frame,
-                "📁 Dossier icones créé avec l'icône YouTube"
-            )
-            fallback_label.pack(pady=20)
+        # Créer l'instance du transcodeur
+        self.transcoder = MacTubeTranscoder(self.main_content, self)
     
     def create_settings_tab(self):
         """Crée le tab des paramètres"""
@@ -651,8 +612,8 @@ class MacTubeApp:
         self.download_frame.pack_forget()
         if hasattr(self, 'audio_extractor'):
             self.audio_extractor.hide()
-        if hasattr(self, 'transcoder_frame'):
-            self.transcoder_frame.pack_forget()
+        if hasattr(self, 'transcoder'):
+            self.transcoder.hide()
         self.history_frame.pack_forget()
         self.queue_frame.pack_forget()
         self.settings_frame.pack_forget()
@@ -663,8 +624,8 @@ class MacTubeApp:
         elif tab_name == "audio" and hasattr(self, 'audio_extractor'):
             self.audio_extractor.pack(fill="both", expand=True)
         elif tab_name == "transcoder":
-            if hasattr(self, 'transcoder_frame'):
-                self.transcoder_frame.pack(fill="both", expand=True)
+            if hasattr(self, 'transcoder'):
+                self.transcoder.pack(fill="both", expand=True)
         elif tab_name == "history":
             self.history_frame.pack(fill="both", expand=True)
         elif tab_name == "queue":
