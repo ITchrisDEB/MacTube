@@ -69,6 +69,24 @@ class DownloadTask:
                 except:
                     return f"YouTube Video ({video_id[:8]}...)"
         return "Vidéo inconnue"
+    
+class TranscodeTask:
+    """Tâche de transcodage pour la file d'attente"""
+    
+    def __init__(self, input_path, output_format, quality, output_path, task_type, download_path):
+        self.input_path = input_path
+        self.output_format = output_format
+        self.quality = quality
+        self.output_path = output_path
+        self.task_type = task_type  # "video_conversion", "audio_extraction", "audio_conversion"
+        self.download_path = download_path
+        self.status = "En attente"
+        self.progress = 0
+        self.speed = "0 MB/s"
+        self.eta = "Calcul..."
+        self.created_at = datetime.now()
+        self.id = f"transcode_{int(time.time())}_{id(self)}"
+        self.filename = Path(input_path).name
 
 class MacTubeApp:
     """Application MacTube - YouTube Downloader pour macOS"""
@@ -143,8 +161,11 @@ class MacTubeApp:
         """Configure la fenêtre principale"""
         self.root = ctk.CTk()
         self.root.title("MacTube - YouTube Downloader")
-        self.root.geometry("1200x900")
-        self.root.minsize(1000, 800)
+        
+        # Résolution optimisée pour macOS (dock + barre de menu)
+        self.root.geometry("1200x800")
+        self.root.resizable(True, True)   # Permettre le redimensionnement
+        self.root.minsize(1000, 700)      # Taille minimale raisonnable
         
         # Configuration de la fenêtre
         self.root.configure(fg_color=MacTubeTheme.get_color('bg_primary'))
@@ -195,7 +216,7 @@ class MacTubeApp:
         
         # Champ URL
         url_frame = ctk.CTkFrame(self.analysis_card.content_frame, fg_color="transparent")
-        url_frame.pack(fill="x", pady=(0, 15))
+        url_frame.pack(fill="x", pady=(0, 10))
         
         MacTubeTheme.create_label_body(url_frame, "🔗 URL YouTube :").pack(side="left")
         
@@ -215,7 +236,7 @@ class MacTubeApp:
         
         # Zone d'information vidéo
         info_frame = ctk.CTkFrame(self.analysis_card.content_frame, fg_color="transparent")
-        info_frame.pack(fill="x", pady=(0, 15))
+        info_frame.pack(fill="x", pady=(0, 10))
         
         # Miniature (à gauche)
         self.thumbnail = MacTubeThumbnail(info_frame)
@@ -252,7 +273,7 @@ class MacTubeApp:
         
         # Qualité vidéo
         quality_frame = ctk.CTkFrame(self.options_card.content_frame, fg_color="transparent")
-        quality_frame.pack(fill="x", pady=(0, 15))
+        quality_frame.pack(fill="x", pady=(0, 10))
         
         MacTubeTheme.create_label_body(quality_frame, "🎬 Qualité vidéo :").pack(side="left")
         
@@ -269,7 +290,7 @@ class MacTubeApp:
         
         # Nom du fichier
         filename_frame = ctk.CTkFrame(self.options_card.content_frame, fg_color="transparent")
-        filename_frame.pack(fill="x", pady=(0, 15))
+        filename_frame.pack(fill="x", pady=(0, 10))
         
         MacTubeTheme.create_label_body(filename_frame, "📝 Nom du fichier :").pack(side="left")
         
@@ -281,7 +302,7 @@ class MacTubeApp:
         
         # Format
         format_frame = ctk.CTkFrame(self.options_card.content_frame, fg_color="transparent")
-        format_frame.pack(fill="x", pady=(0, 15))
+        format_frame.pack(fill="x", pady=(0, 10))
         
         MacTubeTheme.create_label_body(format_frame, "📁 Format de sortie :").pack(side="left")
         
@@ -299,7 +320,7 @@ class MacTubeApp:
         
         # Dossier de destination
         path_frame = ctk.CTkFrame(self.options_card.content_frame, fg_color="transparent")
-        path_frame.pack(fill="x", pady=(0, 15))
+        path_frame.pack(fill="x", pady=(0, 10))
         
         MacTubeTheme.create_label_body(path_frame, "📂 Dossier de destination :").pack(side="left")
         
@@ -358,7 +379,7 @@ class MacTubeApp:
             font=ctk.CTkFont(size=11),
             wrap="word"
         )
-        self.history_list.pack(fill="both", expand=True, pady=(0, 15))
+        self.history_list.pack(fill="both", expand=True, pady=(0, 10))
         
         # Boutons d'action
         buttons_frame = ctk.CTkFrame(self.history_card.content_frame, fg_color="transparent")
@@ -399,7 +420,7 @@ class MacTubeApp:
         
         # Informations de la file
         info_frame = ctk.CTkFrame(self.queue_card.content_frame, fg_color="transparent")
-        info_frame.pack(fill="x", pady=(0, 15))
+        info_frame.pack(fill="x", pady=(0, 10))
         
         self.queue_info_label = MacTubeTheme.create_label_body(
             info_frame,
@@ -409,7 +430,7 @@ class MacTubeApp:
         
         # Liste des tâches
         self.queue_list_frame = ctk.CTkFrame(self.queue_card.content_frame, fg_color="transparent")
-        self.queue_list_frame.pack(fill="both", expand=True, pady=(0, 15))
+        self.queue_list_frame.pack(fill="both", expand=True, pady=(0, 10))
         
         # Zone de liste avec grille globale pour un alignement parfait
         self.queue_list_container = ctk.CTkFrame(self.queue_list_frame, fg_color="transparent")
@@ -501,7 +522,7 @@ class MacTubeApp:
         
         # Thème
         theme_frame = ctk.CTkFrame(self.settings_card.content_frame, fg_color="transparent")
-        theme_frame.pack(fill="x", pady=(0, 15))
+        theme_frame.pack(fill="x", pady=(0, 10))
         
         MacTubeTheme.create_label_body(theme_frame, "🎨 Thème :").pack(side="left")
         
@@ -550,7 +571,7 @@ class MacTubeApp:
         
         # Nombre max de téléchargements simultanés
         max_downloads_frame = ctk.CTkFrame(self.settings_card.content_frame, fg_color="transparent")
-        max_downloads_frame.pack(fill="x", pady=(0, 15))
+        max_downloads_frame.pack(fill="x", pady=(0, 10))
         
         MacTubeTheme.create_label_body(max_downloads_frame, "🔄 Téléchargements simultanés :").pack(side="left")
         
@@ -686,11 +707,17 @@ class MacTubeApp:
                     # Stocker la tâche comme active
                     self.active_tasks[task.id] = task
                     
-                    # Lancer le téléchargement (vidéo ou audio)
-                    handler = self._download_task_thread if getattr(task, 'task_type', 'video') == 'video' else self._download_audio_task_thread
-                    download_thread = threading.Thread(target=handler, args=(task,), daemon=True)
-                    download_thread.start()
-                    self.download_threads.append(download_thread)
+                    # Lancer le téléchargement ou le transcodage selon le type de tâche
+                    if hasattr(task, 'url'):  # Tâche de téléchargement
+                        handler = self._download_task_thread if getattr(task, 'task_type', 'video') == 'video' else self._download_audio_task_thread
+                        download_thread = threading.Thread(target=handler, args=(task,), daemon=True)
+                        download_thread.start()
+                        self.download_threads.append(download_thread)
+                    else:  # Tâche de transcodage
+                        handler = self._transcode_task_thread
+                        transcode_thread = threading.Thread(target=handler, args=(task,), daemon=True)
+                        transcode_thread.start()
+                        self.download_threads.append(transcode_thread)
                     
                     # Nettoyer les threads terminés
                     self.download_threads = [t for t in self.download_threads if t.is_alive()]
@@ -732,6 +759,25 @@ class MacTubeApp:
         # Afficher une pop-up de confirmation sauf en mode silencieux
         if not silent:
             self._show_queue_confirmation(task, task_type)
+        
+        return task
+    
+    def add_transcode_to_queue(self, input_path, output_format, quality, output_path, task_type, download_path, silent: bool = False):
+        """Ajoute une tâche de transcodage à la file d'attente"""
+        task = TranscodeTask(input_path, output_format, quality, output_path, task_type, download_path)
+        self.download_queue.put(task)
+        
+        # Mettre à jour l'interface
+        self.root.after(0, self._update_queue_display)
+        
+        # Programmer des mises à jour régulières de la file d'attente
+        self._schedule_queue_updates()
+        
+        print(f"✅ Tâche de transcodage ajoutée à la file d'attente: {task.id}")
+        
+        # Afficher une pop-up de confirmation sauf en mode silencieux
+        if not silent:
+            self._show_transcode_confirmation(task, task_type)
         
         return task
     
@@ -842,7 +888,7 @@ class MacTubeApp:
             self.root.after(0, lambda: self._update_task_status(task))
 
     def _download_audio_task_thread(self, task):
-        """Thread pour extraire l'audio en file d'attente (utilise la config de mactube_audio.py)"""
+        """Thread pour extraire l'audio en file d'attente avec gestion d'erreur améliorée"""
         try:
             print(f"🎵 Début extraction audio: {task.id} - {task.url}")
             task.status = "Extraction en cours..."
@@ -856,15 +902,15 @@ class MacTubeApp:
             if not ffmpeg_path:
                 raise Exception("FFmpeg non trouvé dans le projet")
 
-            # Sélection du format audio
+            # Sélection du format audio avec fallback multiple
             def audio_selector_from_quality(quality: str) -> str:
                 if '128' in quality:
-                    return "bestaudio[abr<=128]/bestaudio"
+                    return "bestaudio[abr<=128]/bestaudio[abr<=192]/bestaudio/best"
                 if '192' in quality:
-                    return "bestaudio[abr<=192]/bestaudio"
+                    return "bestaudio[abr<=192]/bestaudio/best"
                 if '320' in quality:
-                    return "bestaudio[abr<=320]/bestaudio"
-                return "bestaudio"
+                    return "bestaudio[abr<=320]/bestaudio[abr<=192]/bestaudio/best"
+                return "bestaudio/best"
 
             format_selector = audio_selector_from_quality(task.quality)
 
@@ -875,8 +921,8 @@ class MacTubeApp:
             ydl_opts = {
                 'format': format_selector,
                 'outtmpl': output_template,
-                'quiet': True,
-                'no_warnings': True,
+                'quiet': False,  # Activer les logs pour debug
+                'no_warnings': False,  # Voir les avertissements
                 # Garder les caractères usuels du titre (macOS supporte la plupart)
                 'trim_file_name': 180,
                 'postprocessors': [{
@@ -887,12 +933,55 @@ class MacTubeApp:
                 }],
                 'progress_hooks': [lambda d: self._task_progress_hook(d, task)],
                 'ffmpeg_location': ffmpeg_path,
+                # Ajouter des options de compatibilité
+                'extractaudio': True,
+                'audioformat': task.output_format.lstrip('.'),
+                'audioquality': '0',  # Meilleure qualité disponible
             }
 
             print(f"🔧 Audio yt-dlp: format={format_selector}, codec={task.output_format}")
 
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                result = ydl.download([clean_url])
+            # Essayer d'abord avec le format demandé
+            try:
+                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                    result = ydl.download([clean_url])
+                
+                if result == 0:
+                    print(f"✅ Extraction audio réussie avec le format demandé")
+                else:
+                    raise Exception(f"yt-dlp a retourné le code {result}")
+
+            except yt_dlp.utils.DownloadError as e:
+                print(f"⚠️  Format demandé non disponible, essai avec fallback: {e}")
+                
+                # Lister les formats disponibles pour debug
+                try:
+                    with yt_dlp.YoutubeDL({'quiet': True}) as ydl:
+                        info = ydl.extract_info(clean_url, download=False)
+                        if 'formats' in info:
+                            audio_formats = [f for f in info['formats'] if f.get('acodec') != 'none']
+                            print(f"🔍 Formats audio disponibles: {len(audio_formats)}")
+                            for fmt in audio_formats[:5]:  # Afficher les 5 premiers
+                                print(f"   - {fmt.get('format_id', 'N/A')}: {fmt.get('acodec', 'N/A')} "
+                                      f"({fmt.get('abr', 'N/A')} kbps)")
+                except Exception as debug_e:
+                    print(f"⚠️  Impossible de lister les formats: {debug_e}")
+                
+                # Essayer avec un format plus générique
+                ydl_opts['format'] = "bestaudio/best"
+                ydl_opts['postprocessors'] = [{
+                    'key': 'FFmpegExtractAudio',
+                    'preferredcodec': 'mp3',  # Fallback sur MP3
+                    'preferredquality': '192',
+                }]
+                
+                print(f"🔄 Essai avec format fallback: {ydl_opts['format']}")
+                
+                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                    result = ydl.download([clean_url])
+                
+                if result != 0:
+                    raise Exception(f"Fallback échoué avec le code {result}")
 
             task.status = "Terminé ✅"
             task.progress = 100
@@ -908,8 +997,12 @@ class MacTubeApp:
 
             print(f"✅ Extraction audio terminée: {task.id}")
 
+        except yt_dlp.utils.DownloadError as e:
+            print(f"❌ Erreur de téléchargement yt-dlp: {e}")
+            task.status = f"Erreur format: {str(e)}"
+            self.root.after(0, lambda: self._update_task_status(task))
         except Exception as e:
-            print(f"❌ Erreur extraction audio: {task.id} - {e}")
+            print(f"❌ Erreur inattendue lors de l'extraction audio: {task.id} - {e}")
             import traceback
             traceback.print_exc()
             task.status = f"Erreur: {str(e)}"
@@ -927,16 +1020,26 @@ class MacTubeApp:
             # Mettre à jour la vitesse
             if 'speed' in d and d['speed']:
                 task.speed = f"{d['speed'] / (1024*1024):.1f} MB/s"
-            
-            # Mettre à jour le temps restant
-            if 'eta' in d and d['eta']:
-                task.eta = f"{d['eta']}s"
-            
-            # Mettre à jour le statut
-            task.status = "Téléchargement en cours..."
-            
-            # Rafraîchir l'interface en temps réel
-            self.root.after(0, self.schedule_queue_refresh)
+    
+    def _show_transcode_confirmation(self, task, task_type):
+        """Affiche une pop-up de confirmation pour l'ajout d'une tâche de transcodage"""
+        task_names = {
+            "video_conversion": "Conversion Vidéo",
+            "audio_extraction": "Extraction Audio",
+            "audio_conversion": "Conversion Audio"
+        }
+        
+        task_name = task_names.get(task_type, "Transcodage")
+        
+        messagebox.showinfo(
+            f"{task_name} ajoutée", 
+            f"🔄 {task_name} ajoutée à la file d'attente!\n\n"
+            f"Fichier source: {task.filename}\n"
+            f"Format de sortie: {task.output_format}\n"
+            f"Qualité: {task.quality}\n"
+            f"Fichier de sortie: {Path(task.output_path).name}\n"
+            f"Dossier: {task.download_path}"
+        )
     
     def _update_task_status(self, task):
         """Met à jour le statut d'une tâche dans l'interface"""
@@ -1002,6 +1105,50 @@ class MacTubeApp:
             # Par défaut, utiliser la meilleure qualité disponible
             return "bestvideo+bestaudio"
     
+    def _transcode_task_thread(self, task):
+        """Thread pour traiter une tâche de transcodage"""
+        try:
+            print(f"🔄 Début du transcodage: {task.id} - {task.filename}")
+            task.status = "Transcodage en cours..."
+            self.root.after(0, lambda: self._update_task_status(task))
+            
+            # Déléguer l'exécution au transcodeur
+            if hasattr(self, 'transcoder'):
+                self.transcoder.execute_transcode_task(task)
+            else:
+                raise Exception("Module transcodeur non disponible")
+            
+            # Marquer comme terminé
+            task.status = "Terminé ✅"
+            task.progress = 100
+            
+            # Retirer de la liste des tâches actives
+            if task.id in self.active_tasks:
+                del self.active_tasks[task.id]
+            
+            self.root.after(0, lambda: self._update_task_status(task))
+            
+            print(f"✅ Transcodage terminé avec succès: {task.id}")
+            
+        except Exception as e:
+            print(f"❌ Erreur lors du transcodage: {e}")
+            task.status = f"Erreur: {str(e)}"
+            task.progress = 0
+            
+            # Retirer de la liste des tâches actives
+            if task.id in self.active_tasks:
+                del self.active_tasks[task.id]
+            
+            self.root.after(0, lambda: self._update_task_status(task))
+    
+
+    
+
+    
+
+    
+
+    
     def _refresh_queue_list(self):
         """Met à jour la liste des tâches de la file d'attente avec alignement parfait"""
         if hasattr(self, 'queue_frame'):
@@ -1032,8 +1179,9 @@ class MacTubeApp:
             
             # Créer les lignes pour les tâches actives
             for task_id, task in self.active_tasks.items():
+                title = self._get_task_title(task)
                 self._create_download_row(
-                    title=self._truncate_text(task.video_title, 42),
+                    title=title,
                     status=task.status,
                     progress=task.progress,
                     speed=task.speed,
@@ -1044,8 +1192,9 @@ class MacTubeApp:
             
             # Créer les lignes pour les tâches en attente
             for task in waiting_tasks:
+                title = self._get_task_title(task)
                 self._create_download_row(
-                    title=self._truncate_text(task.video_title, 42),
+                    title=title,
                     status="En attente",
                     progress=0,
                     speed="0 MB/s",
@@ -1081,8 +1230,28 @@ class MacTubeApp:
     
 
     
+    def _get_task_title(self, task):
+        """Génère le titre d'affichage pour une tâche"""
+        # Gérer les tâches de transcodage
+        if hasattr(task, 'filename'):  # TranscodeTask
+            task_names = {
+                "video_conversion": "Conversion Vidéo",
+                "audio_extraction": "Extraction Audio",
+                "audio_conversion": "Conversion Audio"
+            }
+            task_name = task_names.get(task.task_type, "Transcodage")
+            return self._truncate_text(f"{task_name}: {task.filename}", 42)
+        
+        # Gérer les tâches de téléchargement
+        return self._truncate_text(task.video_title, 42)
+    
     def _get_file_display(self, task):
         """Génère l'affichage du nom de fichier pour une tâche"""
+        # Gérer les tâches de transcodage
+        if hasattr(task, 'filename'):  # TranscodeTask
+            return self._truncate_text(task.filename, 28)
+        
+        # Gérer les tâches de téléchargement
         if getattr(task, 'task_type', 'video') == 'audio':
             ext = (task.output_format or 'mp3').lstrip('.')
         else:
@@ -1786,10 +1955,12 @@ class MacTubeApp:
                 
                 # Mettre à jour tous les boutons de navigation
                 nav_text_color = MacTubeTheme.get_color('text_primary')
-                for button in [self.navigation.download_btn, self.navigation.history_btn, 
+                nav_hover_color = MacTubeTheme.get_color('bg_secondary')
+                for button in [self.navigation.download_btn, self.navigation.audio_btn, 
+                             self.navigation.transcoder_btn, self.navigation.history_btn, 
                              self.navigation.queue_btn, self.navigation.settings_btn]:
                     if button:
-                        button.configure(text_color=nav_text_color)
+                        button.configure(text_color=nav_text_color, hover_color=nav_hover_color)
                         print(f"✅ Bouton navigation mis à jour: {button.cget('text')}")
                 
                 # Mettre à jour l'indicateur actif
@@ -1841,6 +2012,10 @@ class MacTubeApp:
             # Mettre à jour aussi l'onglet Audio si présent
             if hasattr(self, 'audio_extractor') and hasattr(self.audio_extractor, 'update_theme'):
                 self.audio_extractor.update_theme()
+            
+            # Mettre à jour aussi l'onglet Transcodeur si présent
+            if hasattr(self, 'transcoder') and hasattr(self.transcoder, 'update_theme'):
+                self.transcoder.update_theme()
 
             # Forcer la mise à jour de l'interface
             self.root.update_idletasks()
@@ -1884,10 +2059,12 @@ class MacTubeApp:
             
             # Mettre à jour tous les labels de navigation
             if hasattr(self, 'navigation'):
-                for button in [self.navigation.download_btn, self.navigation.history_btn, 
+                nav_hover_color = MacTubeTheme.get_color('bg_secondary')
+                for button in [self.navigation.download_btn, self.navigation.audio_btn, 
+                             self.navigation.transcoder_btn, self.navigation.history_btn, 
                              self.navigation.queue_btn, self.navigation.settings_btn]:
                     if button:
-                        button.configure(text_color=text_color)
+                        button.configure(text_color=text_color, hover_color=nav_hover_color)
                 print("✅ Boutons de navigation mis à jour")
             
             # Mettre à jour TOUS les labels créés directement (IMPORTANT !)
@@ -2058,8 +2235,11 @@ class MacTubeApp:
         """Vide l'historique à la fermeture de l'application"""
         try:
             # Vider la liste d'historique
-            if hasattr(self, 'history_list'):
-                self.history_list.delete(0, tk.END)
+            if hasattr(self, 'history_list') and self.history_list:
+                try:
+                    self.history_list.delete(0, tk.END)
+                except:
+                    pass  # Ignorer les erreurs de suppression
             
             # Vider la liste des tâches
             if hasattr(self, 'history_tasks'):

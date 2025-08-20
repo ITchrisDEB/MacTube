@@ -58,7 +58,7 @@ class MacTubeAudioExtractor:
         
         # URL YouTube
         url_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
-        url_frame.pack(fill="x", pady=(0, 15))
+        url_frame.pack(fill="x", pady=(0, 10))
         
         MacTubeTheme.create_label_body(url_frame, "URL YouTube :").pack(side="left")
         
@@ -78,11 +78,11 @@ class MacTubeAudioExtractor:
         
         # Options d'extraction
         options_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
-        options_frame.pack(fill="x", pady=(0, 15))
+        options_frame.pack(fill="x", pady=(0, 10))
         
         # Format audio
         format_frame = ctk.CTkFrame(options_frame, fg_color="transparent")
-        format_frame.pack(fill="x", pady=(0, 15))
+        format_frame.pack(fill="x", pady=(0, 10))
         
         MacTubeTheme.create_label_body(format_frame, "Format audio :").pack(side="left")
         
@@ -101,7 +101,7 @@ class MacTubeAudioExtractor:
         
         # Qualité audio
         quality_frame = ctk.CTkFrame(options_frame, fg_color="transparent")
-        quality_frame.pack(fill="x", pady=(0, 15))
+        quality_frame.pack(fill="x", pady=(0, 10))
         
         MacTubeTheme.create_label_body(quality_frame, "Qualité audio :").pack(side="left")
         
@@ -119,7 +119,7 @@ class MacTubeAudioExtractor:
         
         # Nom du fichier
         filename_frame = ctk.CTkFrame(options_frame, fg_color="transparent")
-        filename_frame.pack(fill="x", pady=(0, 15))
+        filename_frame.pack(fill="x", pady=(0, 10))
         
         MacTubeTheme.create_label_body(filename_frame, "Nom du fichier :").pack(side="left")
         
@@ -131,7 +131,7 @@ class MacTubeAudioExtractor:
         
         # Dossier de destination
         dest_frame = ctk.CTkFrame(options_frame, fg_color="transparent")
-        dest_frame.pack(fill="x", pady=(0, 15))
+        dest_frame.pack(fill="x", pady=(0, 10))
         
         MacTubeTheme.create_label_body(dest_frame, "Dossier de destination :").pack(side="left")
         
@@ -146,7 +146,7 @@ class MacTubeAudioExtractor:
         self.dest_entry.pack(side="left", fill="x", expand=True, padx=(10, 10))
         self.dest_entry.insert(0, self.download_path)
         
-        self.choose_button = MacTubeTheme.create_button_secondary(
+        self.choose_button = MacTubeTheme.create_button_primary(
             dest_frame,
             "Choisir...",
             command=self.choose_destination,
@@ -158,7 +158,7 @@ class MacTubeAudioExtractor:
         extract_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
         extract_frame.pack(fill="x", pady=(20, 0))
         
-        self.extract_button = MacTubeTheme.create_button_success(
+        self.extract_button = MacTubeTheme.create_button_primary(
             extract_frame,
             "Extraire l'audio",
             command=self.extract_audio,
@@ -168,7 +168,7 @@ class MacTubeAudioExtractor:
         
         # Séparateur
         separator_frame = ctk.CTkFrame(content_frame, fg_color=MacTubeTheme.get_color('border'), height=1)
-        separator_frame.pack(fill="x", pady=(30, 20))
+        separator_frame.pack(fill="x", pady=(20, 15))
         
         # Section Upload en Bulk
         bulk_title = MacTubeTheme.create_label_section(
@@ -179,7 +179,7 @@ class MacTubeAudioExtractor:
         
         # Interface pour l'upload bulk
         upload_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
-        upload_frame.pack(fill="x", pady=(0, 15))
+        upload_frame.pack(fill="x", pady=(0, 10))
         
         # Bouton d'upload principal
         self.upload_button = MacTubeTheme.create_button_primary(
@@ -195,11 +195,11 @@ class MacTubeAudioExtractor:
             upload_frame,
             "Aucun fichier sélectionné"
         )
-        self.file_info_label.pack(pady=(0, 15))
+        self.file_info_label.pack(pady=(0, 10))
         
         # Contrôles de format et qualité pour le bulk
         bulk_controls_frame = ctk.CTkFrame(upload_frame, fg_color="transparent")
-        bulk_controls_frame.pack(fill="x", pady=(0, 15))
+        bulk_controls_frame.pack(fill="x", pady=(0, 10))
         
         # Format audio pour le bulk
         format_frame = ctk.CTkFrame(bulk_controls_frame, fg_color="transparent")
@@ -232,14 +232,44 @@ class MacTubeAudioExtractor:
         self.bulk_quality_combo.set("192 kbps")
         self.bulk_quality_combo.pack(side="left")
         
-        # Bouton de traitement
-        self.process_bulk_button = MacTubeTheme.create_button_success(
-            upload_frame,
+        # Dossier de destination pour le bulk
+        dest_frame = ctk.CTkFrame(bulk_controls_frame, fg_color="transparent")
+        dest_frame.pack(side="left", padx=(20, 0))
+        
+        dest_label = MacTubeTheme.create_label_body(dest_frame, "Dossier de destination:")
+        dest_label.pack(side="left", padx=(0, 10))
+        
+        self.bulk_dest_path = tk.StringVar()
+        self.bulk_dest_entry = ctk.CTkEntry(
+            dest_frame,
+            textvariable=self.bulk_dest_path,
+            height=35,
+            font=ctk.CTkFont(size=12),
+            corner_radius=8,
+            width=250,
+            border_width=1,
+            border_color=MacTubeTheme.get_color('text_secondary'),
+            placeholder_text="Choisir le dossier de destination..."
+        )
+        self.bulk_dest_entry.pack(side="left", padx=(10, 10))
+        self.bulk_dest_path.set(self.download_path)  # Pré-remplir avec le chemin par défaut
+        
+        self.bulk_dest_button = MacTubeTheme.create_button_primary(
+            dest_frame,
+            "Choisir...",
+            command=self.choose_bulk_destination,
+            width=100
+        )
+        self.bulk_dest_button.pack(side="left")
+        
+        # Bouton de traitement (à droite du bouton Choisir...)
+        self.process_bulk_button = MacTubeTheme.create_button_primary(
+            dest_frame,
             "🚀 Traiter le fichier",
             command=self.process_bulk_file,
-            width=200
+            width=150
         )
-        self.process_bulk_button.pack(pady=(0, 20))
+        self.process_bulk_button.pack(side="left", padx=(10, 0))
         
         # Variables pour le bulk
         self.bulk_file_path = None
@@ -788,12 +818,15 @@ class MacTubeAudioExtractor:
             added_count = 0
             for url in urls:
                 # Créer une tâche audio pour chaque URL avec les paramètres bulk
+                # Utiliser le dossier de destination bulk s'il est défini, sinon le dossier par défaut
+                download_path = self.bulk_dest_path.get() if self.bulk_dest_path.get() else self.download_path
+                
                 task = self.app.add_to_queue(
                     url=url,
                     quality=self.bulk_quality_combo.get(),
                     output_format=self.bulk_format_combo.get(),
                     filename="%(title)s",  # Utiliser le nom par défaut, évite les collisions
-                    download_path=self.dest_entry.get(),
+                    download_path=download_path,
                     task_type="audio",
                     silent=True  # éviter toutes les pop-ups en mode bulk
                 )
@@ -862,6 +895,12 @@ class MacTubeAudioExtractor:
         popup.transient(self.parent)
         popup.grab_set()
     
+    def choose_bulk_destination(self):
+        """Ouvre le dialogue de sélection de dossier pour le bulk"""
+        folder = filedialog.askdirectory(title="Choisir le dossier de destination pour l'extraction bulk")
+        if folder:
+            self.bulk_dest_path.set(folder)
+    
     def reset_bulk_interface(self):
         """Réinitialise l'interface bulk"""
         self.bulk_file_path = None
@@ -871,6 +910,8 @@ class MacTubeAudioExtractor:
         self.bulk_format_combo.set(".mp3")
         self.bulk_quality_combo.set("192 kbps")
         self.bulk_quality_combo.configure(state="readonly")
+        # Réinitialiser le dossier de destination
+        self.bulk_dest_path.set("")
     
     # Les méthodes de gestion des événements ne sont plus nécessaires
 
