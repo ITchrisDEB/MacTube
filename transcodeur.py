@@ -88,7 +88,7 @@ class MacTubeTranscoder:
             "🎬 Conversion Vidéo"
         ).pack(pady=(20, 15), padx=20, anchor="w")
         
-        # Contenu
+        # Contenu de la carte
         content_frame = ctk.CTkFrame(video_card, fg_color="transparent")
         content_frame.pack(fill="both", expand=True, padx=20, pady=(0, 20))
         
