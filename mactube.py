@@ -172,6 +172,7 @@ class MacTubeApp:
         self.create_download_tab()
         self.create_history_tab()
         self.create_queue_tab()
+        self.create_transcoder_tab()
         self.create_settings_tab()
         
         # Afficher le tab de téléchargement par défaut
@@ -478,6 +479,51 @@ class MacTubeApp:
         # Initialiser la liste
         self.schedule_queue_refresh(0)
     
+    def create_transcoder_tab(self):
+        """Crée le tab du transcodeur"""
+        self.transcoder_frame = ctk.CTkFrame(
+            self.main_content,
+            fg_color="transparent"
+        )
+        
+        # Carte du transcodeur
+        self.transcoder_card = MacTubeCard(
+            self.transcoder_frame,
+            "🔄 Transcodeur Audio/Video"
+        )
+        self.transcoder_card.pack(fill="both", expand=True)
+        
+        # Zone de contenu principal
+        content_frame = ctk.CTkFrame(self.transcoder_card.content_frame, fg_color="transparent")
+        content_frame.pack(fill="both", expand=True, padx=20, pady=(0, 20))
+        
+        # Message d'information
+        info_label = MacTubeTheme.create_label_body(
+            content_frame,
+            "🚧 Interface du transcodeur en cours de développement..."
+        )
+        info_label.pack(pady=50)
+        
+        # Icône YouTube (utilisant l'icône téléchargée)
+        try:
+            from PIL import Image
+            import io
+            
+            # Créer un label pour l'icône
+            icon_label = MacTubeTheme.create_label_body(
+                content_frame,
+                "🎯 Nouvel onglet Transcodeur créé avec succès !"
+            )
+            icon_label.pack(pady=20)
+            
+        except ImportError:
+            # Fallback si PIL n'est pas disponible
+            fallback_label = MacTubeTheme.create_label_body(
+                content_frame,
+                "📁 Dossier icones créé avec l'icône YouTube"
+            )
+            fallback_label.pack(pady=20)
+    
     def create_settings_tab(self):
         """Crée le tab des paramètres"""
         self.settings_frame = ctk.CTkFrame(
@@ -607,6 +653,8 @@ class MacTubeApp:
             self.audio_extractor.hide()
         self.history_frame.pack_forget()
         self.queue_frame.pack_forget()
+        if hasattr(self, 'transcoder_frame'):
+            self.transcoder_frame.pack_forget()
         self.settings_frame.pack_forget()
         
         # Afficher le tab sélectionné
@@ -618,6 +666,9 @@ class MacTubeApp:
             self.history_frame.pack(fill="both", expand=True)
         elif tab_name == "queue":
             self.queue_frame.pack(fill="both", expand=True)
+        elif tab_name == "transcoder":
+            if hasattr(self, 'transcoder_frame'):
+                self.transcoder_frame.pack(fill="both", expand=True)
         elif tab_name == "settings":
             self.settings_frame.pack(fill="both", expand=True)
     
