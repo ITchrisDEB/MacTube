@@ -89,7 +89,7 @@ class MacTubeTranscoder:
         ).pack(pady=(20, 15), padx=20, anchor="w")
         
         # Contenu
-        content_frame = ctk.CTkFrame(video_card.content_frame, fg_color="transparent")
+        content_frame = ctk.CTkFrame(video_card, fg_color="transparent")
         content_frame.pack(fill="both", expand=True, padx=20, pady=(0, 20))
         
         # Sélection du fichier
@@ -153,7 +153,7 @@ class MacTubeTranscoder:
         ).pack(pady=(20, 15), padx=20, anchor="w")
         
         # Contenu
-        content_frame = ctk.CTkFrame(audio_card.content_frame, fg_color="transparent")
+        content_frame = ctk.CTkFrame(audio_card, fg_color="transparent")
         content_frame.pack(fill="both", expand=True, padx=20, pady=(0, 20))
         
         # Sélection du fichier vidéo
@@ -235,7 +235,7 @@ class MacTubeTranscoder:
         ).pack(pady=(20, 15), padx=20, anchor="w")
         
         # Contenu
-        content_frame = ctk.CTkFrame(audio_conv_card.content_frame, fg_color="transparent")
+        content_frame = ctk.CTkFrame(audio_conv_card, fg_color="transparent")
         content_frame.pack(fill="both", expand=True, padx=20, pady=(0, 20))
         
         # Sélection du fichier audio
