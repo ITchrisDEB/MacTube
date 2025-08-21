@@ -496,7 +496,16 @@ class MacTubeApp:
             command=self.resume_queue,
             width=120
         )
-        self.resume_queue_button.pack(side="left")
+        self.resume_queue_button.pack(side="left", padx=(0, 10))
+        
+        # Bouton pour vider la file d'attente (ajouté dans l'onglet File d'attente)
+        self.clear_queue_button_queue = MacTubeTheme.create_button_secondary(
+            buttons_frame,
+            "🗑️ Vider la file d'attente",
+            command=self.clear_download_queue,
+            width=150
+        )
+        self.clear_queue_button_queue.pack(side="left")
         
         # Initialiser la liste
         self.schedule_queue_refresh(0)
@@ -607,8 +616,8 @@ class MacTubeApp:
         print(f"✅ Nombre max de téléchargements mis à jour: {self.max_concurrent_downloads}")
     
     def clear_download_queue(self):
-        """Vide la file d'attente des téléchargements"""
-        if messagebox.askyesno("Confirmation", "Voulez-vous vraiment vider la file d'attente ?"):
+        """Vide la file d'attente des téléchargements et nettoie les fichiers temporaires"""
+        if messagebox.askyesno("Confirmation", "Voulez-vous vraiment vider la file d'attente et nettoyer les fichiers temporaires ?"):
             # Vider la file
             while not self.download_queue.empty():
                 try:
@@ -624,8 +633,102 @@ class MacTubeApp:
                     pass
             
             self.download_threads = []
-            messagebox.showinfo("Succès", "File d'attente vidée avec succès!")
-            print("✅ File d'attente vidée")
+            
+            # Nettoyer les fichiers temporaires
+            self._cleanup_temp_files()
+            
+            messagebox.showinfo("Succès", "File d'attente vidée et fichiers temporaires nettoyés avec succès!")
+            print("✅ File d'attente vidée et fichiers temporaires nettoyés")
+    
+    def _cleanup_temp_files(self):
+        """Nettoie les fichiers temporaires de tous les dossiers utilisés par l'application"""
+        try:
+            print("🧹 Début du nettoyage des fichiers temporaires...")
+            
+            # Récupérer tous les chemins à nettoyer
+            paths_to_clean = set()
+            
+            # Ajouter le chemin principal de l'interface
+            if hasattr(self, 'download_path'):
+                paths_to_clean.add(self.download_path)
+            
+            # Ajouter les chemins de toutes les tâches dans la file d'attente
+            if hasattr(self, 'download_queue'):
+                # Créer une copie de la queue pour l'itérer
+                temp_queue = queue.Queue()
+                while not self.download_queue.empty():
+                    try:
+                        task = self.download_queue.get_nowait()
+                        if hasattr(task, 'download_path'):
+                            paths_to_clean.add(task.download_path)
+                        # Remettre la tâche dans la queue
+                        temp_queue.put(task)
+                    except queue.Empty:
+                        break
+                
+                # Restaurer la queue
+                while not temp_queue.empty():
+                    self.download_queue.put(temp_queue.get())
+            
+            # Ajouter les chemins des tâches actives
+            if hasattr(self, 'active_tasks'):
+                for task in self.active_tasks.values():
+                    if hasattr(task, 'download_path'):
+                        paths_to_clean.add(task.download_path)
+            
+            # Ajouter les chemins des modules audio et transcodeur
+            if hasattr(self, 'audio_extractor') and hasattr(self.audio_extractor, 'download_path'):
+                paths_to_clean.add(self.audio_extractor.download_path)
+            
+            if hasattr(self, 'transcoder') and hasattr(self.transcoder, 'download_path'):
+                paths_to_clean.add(self.transcoder.download_path)
+            
+            # Nettoyer chaque dossier
+            total_cleaned = 0
+            for path in paths_to_clean:
+                if path and os.path.exists(path):
+                    cleaned = self._cleanup_directory(path)
+                    total_cleaned += cleaned
+                    if cleaned > 0:
+                        print(f"✅ Nettoyé {cleaned} fichiers temporaires dans: {path}")
+            
+            if total_cleaned > 0:
+                print(f"🧹 Nettoyage terminé: {total_cleaned} fichiers temporaires supprimés")
+            else:
+                print("✅ Aucun fichier temporaire trouvé à nettoyer")
+                
+        except Exception as e:
+            print(f"❌ Erreur lors du nettoyage des fichiers temporaires: {e}")
+    
+    def _cleanup_directory(self, directory_path):
+        """Nettoie un dossier spécifique des fichiers temporaires"""
+        try:
+            cleaned_count = 0
+            directory = Path(directory_path)
+            
+            if not directory.exists() or not directory.is_dir():
+                return 0
+            
+            # Extensions de fichiers temporaires à supprimer
+            temp_extensions = {'.part', '.ytdl', '.tmp', '.download', '.ytdlp'}
+            
+            # Scanner le dossier
+            for file_path in directory.iterdir():
+                if file_path.is_file():
+                    # Vérifier si c'est un fichier temporaire
+                    if file_path.suffix.lower() in temp_extensions:
+                        try:
+                            file_path.unlink()  # Supprimer le fichier
+                            cleaned_count += 1
+                            print(f"🗑️ Supprimé: {file_path.name}")
+                        except Exception as e:
+                            print(f"⚠️ Impossible de supprimer {file_path.name}: {e}")
+            
+            return cleaned_count
+            
+        except Exception as e:
+            print(f"❌ Erreur lors du nettoyage du dossier {directory_path}: {e}")
+            return 0
     
     def show_tab(self, tab_name):
         """Affiche un tab spécifique"""
