@@ -279,12 +279,12 @@ class MacTubeAudioExtractor:
         self.progress_bar = MacTubeProgressBar(extract_frame)
         self.progress_bar.hide()
         
-        # Label de statut
+        # Label de statut (supprimé de l'interface)
         self.status_label = MacTubeTheme.create_label_body(
             extract_frame,
-            "Prêt à extraire l'audio d'une vidéo YouTube"
+            ""
         )
-        self.status_label.pack(pady=(10, 0))
+        # self.status_label.pack(pady=(10, 0))  # Masqué de l'interface
     
     def on_format_change(self, value):
         """Gère le changement de format audio"""
@@ -439,7 +439,7 @@ class MacTubeAudioExtractor:
     def _update_audio_info(self, title, duration, channel):
         """Met à jour l'interface avec les informations audio"""
         self.analyze_button.configure(state="normal", text="Analyser")
-        self.status_label.configure(text=f"✅ Audio analysé - {title}")
+        self.status_label.configure(text=f"Audio analysé - {title}")
         
         # Activer le bouton d'extraction
         self.extract_button.configure(state="normal")
@@ -480,7 +480,7 @@ class MacTubeAudioExtractor:
 
             # Ajouter la tâche à la file (type audio)
             app.add_to_queue(clean_url, quality, output_format, filename, download_path, task_type="audio")
-            self.status_label.configure(text="✅ Ajouté à la file d'attente audio")
+            self.status_label.configure(text="Ajouté à la file d'attente audio")
             self.extract_button.configure(text="🎵 Ajouté à la file")
         except Exception as e:
             print(f"❌ Erreur lors de l'ajout à la file d'attente: {e}")
@@ -605,7 +605,7 @@ class MacTubeAudioExtractor:
         self.is_extracting = False
         self.extract_button.configure(state="normal", text="Extraire l'audio")
         self.progress_bar.hide()
-        self.status_label.configure(text="✅ Extraction audio terminée avec succès !")
+        self.status_label.configure(text="Extraction audio terminée avec succès !")
         
         # Notification
         messagebox.showinfo("Extraction terminée", f"Audio extrait avec succès !\n\nEmplacement: {output_path}")

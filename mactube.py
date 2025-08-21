@@ -354,7 +354,7 @@ class MacTubeApp:
         # Label de statut
         self.status_label = MacTubeTheme.create_label_body(
             self.download_frame,
-            "✅ Prêt à analyser une vidéo YouTube"
+            "Analyse de Vidéo"
         )
         self.status_label.pack()
     
@@ -1705,7 +1705,7 @@ class MacTubeApp:
         
         # Réactiver le bouton
         self.analyze_button.configure(state="normal", text="🔍 Analyser")
-        self.status_label.configure(text="✅ Vidéo analysée avec succès - Prêt à télécharger")
+        self.status_label.configure(text="Vidéo analysée avec succès - Prêt à télécharger")
         
         # Actualiser l'historique
         self.refresh_history()
@@ -1808,7 +1808,7 @@ class MacTubeApp:
         )
         
         # Mettre à jour l'interface
-        self.status_label.configure(text=f"✅ Ajouté à la file d'attente: {task.id}")
+        self.status_label.configure(text=f"Ajouté à la file d'attente: {task.id}")
         self.download_button.configure(text="⬇️ Ajouter à la file")
         
         # Réinitialiser les champs
@@ -1887,7 +1887,7 @@ class MacTubeApp:
         self.is_downloading = False
         self.download_button.configure(state="normal", text="⬇️ Télécharger")
         self.progress_bar.hide()
-        self.status_label.configure(text="✅ Téléchargement terminé avec succès !")
+        self.status_label.configure(text="Téléchargement terminé avec succès !")
         
         # Enregistrer dans l'historique
         self.history.add_download(
