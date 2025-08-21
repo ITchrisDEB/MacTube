@@ -90,7 +90,8 @@ class MacTubeTheme:
             parent,
             text=text,
             font=ctk.CTkFont(size=20, weight="bold"),
-            text_color=cls.get_color('text_primary')
+            text_color=cls.get_color('text_primary'),
+            anchor="w"  # Alignement à gauche
         )
     
     @classmethod
@@ -100,7 +101,8 @@ class MacTubeTheme:
             parent,
             text=text,
             font=ctk.CTkFont(size=16, weight="bold"),
-            text_color=cls.get_color('text_primary')
+            text_color=cls.get_color('text_primary'),
+            anchor="w"  # Alignement à gauche
         )
     
     @classmethod
@@ -110,7 +112,9 @@ class MacTubeTheme:
             parent,
             text=text,
             font=ctk.CTkFont(size=12),
-            text_color=cls.get_color('text_primary')
+            text_color=cls.get_color('text_primary'),
+            anchor="w",  # Alignement à gauche
+            justify="left"  # Justification à gauche pour les textes multi-lignes
         )
     
     @classmethod

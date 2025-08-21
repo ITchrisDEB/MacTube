@@ -29,6 +29,7 @@ from mactube_components import MacTubeNavigation, MacTubeCard, MacTubeProgressBa
 from mactube_ffmpeg import get_ffmpeg_path
 from mactube_audio import MacTubeAudioExtractor
 from transcodeur import MacTubeTranscoder
+from mactube_help import create_help_menu
 
 class DownloadTask:
     """Tâche de téléchargement pour la file d'attente"""
@@ -138,6 +139,9 @@ class MacTubeApp:
         
         # Démarrer le gestionnaire de file d'attente
         self.start_queue_worker()
+        
+        # Créer le menu d'aide
+        create_help_menu(self)
         
         print("✅ MacTube - YouTube Downloader initialisé")
     
