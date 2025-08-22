@@ -26,7 +26,7 @@
 
 ---
 
-## 🔄 Transcodeur Audio/Video
+## 🔄 Transcodeur
 
 - **Conversion Vidéo** : Formats MP4, MKV, WebM, AVI, MOV, FLV, 3GP
 - **Extraction Audio depuis Vidéo** : MP3, M4A, AAC, FLAC, WAV, OGG
@@ -59,7 +59,7 @@
 
 ## 🚀 Installation
 
-### Lancement Rapide (Recommandé pour débutants)
+### Lancement Rapide macOS (Recommandé pour débutants)
 ```bash
 git clone https://github.com/ITchrisDEB/MacTube.git
 cd MacTube
@@ -68,6 +68,19 @@ cd MacTube
 
 **Le script `mactube.sh` est automatiquement :**
 - Vérifie Python 3
+- Crée l'environnement virtuel
+- Installe les dépendances
+- Configure FFmpeg
+- Lance l'application
+
+### Lancement Rapide Windows (Recommandé pour débutants)
+```cmd
+git clone https://github.com/ITchrisDEB/MacTube.git
+cd MacTube
+mactube.bat
+```
+
+**Le script `mactube.bat` est automatiquement :**
 - Crée l'environnement virtuel
 - Installe les dépendances
 - Configure FFmpeg
@@ -114,8 +127,8 @@ git clone https://github.com/ITchrisDEB/mactube.git
 cd mactube
 
 # Créer l'environnement virtuel
-python3 -m venv venv
-source venv/bin/activate
+python3 -m venv mactube
+source mactube/bin/activate
 
 # Installer les dépendances
 pip install -r requirements.txt
@@ -159,6 +172,14 @@ chmod +x mactube.sh
 # Le script télécharge automatiquement FFmpeg
 # Si problème, exécuter manuellement :
 ./download_ffmpeg.sh
+```
+
+**❌ Problèmes Windows**
+```cmd
+# Si mactube.bat ne fonctionne pas :
+# 1. Vérifiez que Python est installé et dans le PATH
+# 2. Exécutez manuellement : python mactube.py
+# 3. Pour FFmpeg : download_ffmpeg.bat
 ```
 
 ### Support
