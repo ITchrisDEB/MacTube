@@ -5,7 +5,7 @@
 customtkinter==5.2.2
 
 # Téléchargement YouTube (remplace pytube)
-yt-dlp==2025.8.11
+yt-dlp==2026.3.17
 
 # Traitement d'images et miniatures
 pillow==11.3.0
