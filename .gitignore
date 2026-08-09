@@ -33,6 +33,7 @@ __pycache__/
 
 # Fichiers FFmpeg temporaires
 ffmpeg_binary
+ffmpeg.exe
 ffmpeg_bundle/
 
 # Logs et débogage

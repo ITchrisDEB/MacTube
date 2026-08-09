@@ -6,6 +6,7 @@ MacTube Theme - Thème moderne pour MacTube (YouTube Downloader pour macOS)
 
 import customtkinter as ctk
 import darkdetect
+import tkinter as tk
 
 class MacTubeTheme:
     """Gestionnaire de thème pour MacTube"""
@@ -165,7 +166,7 @@ class MacTubeTheme:
     @classmethod
     def create_entry_modern(cls, parent, placeholder):
         """Crée un champ de saisie moderne"""
-        return ctk.CTkEntry(
+        entry = ctk.CTkEntry(
             parent,
             placeholder_text=placeholder,
             font=ctk.CTkFont(size=12),
@@ -174,7 +175,9 @@ class MacTubeTheme:
             border_width=1,
             border_color=cls.get_color('text_secondary')
         )
-    
+        attach_entry_context_menu(entry)
+        return entry
+
     @classmethod
     def create_card_frame(cls, parent):
         """Crée un frame de carte"""
@@ -185,6 +188,80 @@ class MacTubeTheme:
             border_width=1,
             border_color=cls.get_color('text_secondary')
         )
+
+
+def attach_entry_context_menu(entry, paste_callback=None):
+    """Attache un menu contextuel Coller/Copier/Couper/Tout sélectionner à un CTkEntry."""
+    try:
+        root = entry.winfo_toplevel()
+    except Exception:
+        return
+
+    menu = tk.Menu(root, tearoff=0)
+
+    def _paste():
+        if paste_callback:
+            paste_callback()
+            return
+        try:
+            text = root.clipboard_get()
+            try:
+                entry.delete("sel.first", "sel.last")
+            except Exception:
+                pass
+            entry.insert("insert", text)
+        except Exception:
+            pass
+
+    def _copy():
+        try:
+            selected = entry.selection_get()
+            root.clipboard_clear()
+            root.clipboard_append(selected)
+        except Exception:
+            pass
+
+    def _cut():
+        try:
+            selected = entry.selection_get()
+            root.clipboard_clear()
+            root.clipboard_append(selected)
+            entry.delete("sel.first", "sel.last")
+        except Exception:
+            pass
+
+    def _select_all():
+        try:
+            entry.select_range(0, tk.END)
+            entry.icursor(tk.END)
+        except Exception:
+            pass
+
+    menu.add_command(label="Coller", command=_paste)
+    menu.add_command(label="Copier", command=_copy)
+    menu.add_command(label="Couper", command=_cut)
+    menu.add_separator()
+    menu.add_command(label="Tout sélectionner", command=_select_all)
+
+    def _show(event):
+        try:
+            menu.tk_popup(event.x_root, event.y_root)
+        finally:
+            menu.grab_release()
+        return "break"
+
+    for sequence in ("<Button-3>", "<Button-2>", "<Control-Button-1>"):
+        entry.bind(sequence, _show)
+        # CustomTkinter: aussi binder le widget interne si présent
+        try:
+            if hasattr(entry, "_entry"):
+                entry._entry.bind(sequence, _show)
+        except Exception:
+            pass
+
+    entry._mactube_context_menu = menu
+    return menu
+
 
 def setup_mactube_theme():
     """Configure le thème MacTube"""

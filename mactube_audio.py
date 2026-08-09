@@ -14,7 +14,7 @@ import yt_dlp
 from pathlib import Path
 
 # Imports personnalisés
-from mactube_theme import MacTubeTheme
+from mactube_theme import MacTubeTheme, attach_entry_context_menu
 from mactube_ffmpeg import get_ffmpeg_path
 
 # Pas d'imports spéciaux nécessaires
@@ -145,6 +145,7 @@ class MacTubeAudioExtractor:
         )
         self.dest_entry.pack(side="left", fill="x", expand=True, padx=(10, 10))
         self.dest_entry.insert(0, self.download_path)
+        attach_entry_context_menu(self.dest_entry)
         
         self.choose_button = MacTubeTheme.create_button_primary(
             dest_frame,
@@ -253,6 +254,7 @@ class MacTubeAudioExtractor:
         )
         self.bulk_dest_entry.pack(side="left", padx=(10, 10))
         self.bulk_dest_path.set(self.download_path)  # Pré-remplir avec le chemin par défaut
+        attach_entry_context_menu(self.bulk_dest_entry)
         
         self.bulk_dest_button = MacTubeTheme.create_button_primary(
             dest_frame,

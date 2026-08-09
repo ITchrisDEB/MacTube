@@ -26,7 +26,7 @@ class MacTubeHelp:
         
         # Informations de l'application
         self.app_name = "MacTube"
-        self.app_version = "v1.2.6"
+        self.app_version = "v1.2.7"
         self.app_description = "YouTube Downloader moderne pour macOS"
         
         # Créer la fenêtre d'aide
@@ -810,7 +810,7 @@ def create_help_menu(parent_app):
 
 def show_about_dialog(parent_app):
     """Affiche la boîte de dialogue À propos"""
-    about_text = f"""MacTube {parent_app.app_version if hasattr(parent_app, 'app_version') else 'v1.2.6'}
+    about_text = f"""MacTube {parent_app.app_version if hasattr(parent_app, 'app_version') else 'v1.2.7'}
 
 © 2025 - Licence MIT
 GitHub: https://github.com/ITchrisDEB/MacTube"""

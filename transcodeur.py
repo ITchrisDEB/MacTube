@@ -15,7 +15,7 @@ from pathlib import Path
 import sys
 
 # Imports personnalisés
-from mactube_theme import MacTubeTheme
+from mactube_theme import MacTubeTheme, attach_entry_context_menu
 from mactube_ffmpeg import get_ffmpeg_path
 
 class MacTubeTranscoder:
@@ -126,6 +126,7 @@ class MacTubeTranscoder:
         self.video_file_label.pack(side="left", fill="x", expand=True, padx=(10, 10))
         self.video_file_label.insert(0, "Aucun fichier sélectionné")
         self.video_file_label.configure(state="readonly")
+        attach_entry_context_menu(self.video_file_label)
         
         self.select_video_button = MacTubeTheme.create_button_primary(
             file_frame,
@@ -174,6 +175,7 @@ class MacTubeTranscoder:
         )
         self.video_dest_entry.pack(side="left", fill="x", expand=True, padx=(10, 10))
         self.video_dest_path.set(self.download_path)  # Pré-remplir avec le chemin par défaut
+        attach_entry_context_menu(self.video_dest_entry)
         
         self.video_dest_button = MacTubeTheme.create_button_primary(
             dest_frame,
@@ -224,6 +226,7 @@ class MacTubeTranscoder:
         self.audio_video_file_label.pack(side="left", fill="x", expand=True, padx=(10, 10))
         self.audio_video_file_label.insert(0, "Aucun fichier sélectionné")
         self.audio_video_file_label.configure(state="readonly")
+        attach_entry_context_menu(self.audio_video_file_label)
         
         self.select_audio_video_button = MacTubeTheme.create_button_primary(
             file_frame,
@@ -293,6 +296,7 @@ class MacTubeTranscoder:
         )
         self.audio_dest_entry.pack(side="left", fill="x", expand=True, padx=(10, 10))
         self.audio_dest_path.set(self.download_path)  # Pré-remplir avec le chemin par défaut
+        attach_entry_context_menu(self.audio_dest_entry)
         
         self.audio_dest_button = MacTubeTheme.create_button_primary(
             dest_frame,
@@ -343,6 +347,7 @@ class MacTubeTranscoder:
         self.audio_input_file_label.pack(side="left", fill="x", expand=True, padx=(10, 10))
         self.audio_input_file_label.insert(0, "Aucun fichier sélectionné")
         self.audio_input_file_label.configure(state="readonly")
+        attach_entry_context_menu(self.audio_input_file_label)
         
         self.select_audio_input_button = MacTubeTheme.create_button_primary(
             file_frame,
@@ -412,6 +417,7 @@ class MacTubeTranscoder:
         )
         self.audio_conv_dest_entry.pack(side="left", fill="x", expand=True, padx=(10, 10))
         self.audio_conv_dest_path.set(self.download_path)  # Pré-remplir avec le chemin par défaut
+        attach_entry_context_menu(self.audio_conv_dest_entry)
         
         self.audio_conv_dest_button = MacTubeTheme.create_button_primary(
             dest_frame,

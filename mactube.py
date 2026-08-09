@@ -24,7 +24,7 @@ import yt_dlp
 import requests
 
 # Imports personnalisés
-from mactube_theme import MacTubeTheme, setup_mactube_theme
+from mactube_theme import MacTubeTheme, setup_mactube_theme, attach_entry_context_menu
 from mactube_components import MacTubeNavigation, MacTubeCard, MacTubeProgressBar, MacTubeThumbnail
 from mactube_ffmpeg import get_ffmpeg_path
 from mactube_audio import MacTubeAudioExtractor
@@ -772,19 +772,9 @@ class MacTubeApp:
         # Entrée pour analyser
         self.url_entry.bind('<Return>', lambda e: self.analyze_video())
         
-        # Menu contextuel pour le clic droit
-        self.create_context_menu()
-        
-        # Bindings pour le menu contextuel - Gestion multi-OS
-        self.url_entry.bind('<Button-3>', self.show_context_menu)  # Clic droit standard (Windows/Linux)
-        self.url_entry.bind('<Control-Button-1>', self.show_context_menu)  # Clic droit macOS (Cmd+Clic)
-        self.url_entry.bind('<Button-2>', self.show_context_menu)  # Clic droit macOS alternatif
-        
-        # Binding spécifique pour macOS
-        if hasattr(self, 'root') and hasattr(self.root, 'tk') and self.root.tk.call('tk', 'windowingsystem') == 'aqua':
-            print("🔧 Détection macOS - Configuration des bindings spécifiques")
-            self.url_entry.bind('<Button-2>', self.show_context_menu)
-            self.url_entry.bind('<Control-Button-1>', self.show_context_menu)
+        # Menu contextuel générique + collage spécial URL (analyse auto)
+        attach_entry_context_menu(self.url_entry, paste_callback=self.paste_url)
+        print("✅ Menu contextuel créé avec succès")
         
         # Binding de fermeture avec nettoyage automatique de l'historique
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
